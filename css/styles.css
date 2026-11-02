@@ -562,3 +562,84 @@ footer li a:hover{color:#fff}
   .fab,.nav,.mobile-menu,.lb,.marquee{display:none!important}
   body{background:#fff}
 }
+
+/* ============ THEME TOGGLE ============ */
+.theme-toggle{
+  flex:none;width:46px;height:46px;border-radius:14px;display:grid;place-items:center;
+  background:var(--gris-cla);color:var(--tinta);transition:transform .18s ease, background .18s ease;
+}
+.theme-toggle:hover{transform:translateY(-2px)}
+.theme-toggle:active{transform:scale(.95)}
+.theme-toggle .ico-sun{display:none}
+@media (max-width:980px){
+  .theme-toggle{margin-left:auto}
+  .burger{margin-left:10px}
+}
+
+/* ============ DARK THEME ============ */
+[data-theme="dark"]{
+  color-scheme:dark;
+  --crema:#0B1023;
+  --tinta:#EEF1FA;
+  --gris:#A9B0CC;
+  --gris-cla:#26304F;
+  --superficie:#141B36;
+  --superficie-2:#1B2446;
+  --azul-txt:#8FA8FF;
+  --sombra:0 4px 18px rgba(0,0,0,.28), 0 18px 45px rgba(0,0,0,.32);
+  --sombra-alta:0 10px 26px rgba(0,0,0,.36), 0 30px 70px rgba(0,0,0,.45);
+}
+[data-theme="dark"] .theme-toggle .ico-sun{display:block}
+[data-theme="dark"] .theme-toggle .ico-moon{display:none}
+[data-theme="dark"] .grad-txt{background-image:linear-gradient(100deg,#7D97FF 0%,#B794FF 45%,#FF6FB0 100%)}
+[data-theme="dark"] .nav{background:rgba(11,16,35,.86);border-bottom-color:rgba(143,168,255,.14)}
+[data-theme="dark"] .nav.scrolled{background:rgba(11,16,35,.96);box-shadow:0 6px 26px rgba(0,0,0,.4)}
+[data-theme="dark"] .brand-txt .b1,
+[data-theme="dark"] .linea{color:var(--tinta)}
+[data-theme="dark"] .brand-txt .b2{color:#FF6B7F}
+[data-theme="dark"] .hero::before{opacity:.55}
+[data-theme="dark"] .hero p.lead{color:#C9CFE6}
+
+/* Surfaces that are white in the light theme */
+[data-theme="dark"] .mobile-menu,
+[data-theme="dark"] .float-card,
+[data-theme="dark"] .pilar,
+[data-theme="dark"] .servicios,
+[data-theme="dark"] .filtro,
+[data-theme="dark"] .promo,
+[data-theme="dark"] .destacados,
+[data-theme="dark"] .ci,
+[data-theme="dark"] .cuadro,
+[data-theme="dark"] .info-card,
+[data-theme="dark"] .form-card{background:var(--superficie)}
+[data-theme="dark"] .chip:hover,
+[data-theme="dark"] .promo-img,
+[data-theme="dark"] .cuadro .ci-img,
+[data-theme="dark"] .field input:focus,
+[data-theme="dark"] .field select:focus,
+[data-theme="dark"] .field textarea:focus{background:var(--superficie-2)}
+[data-theme="dark"] .filtro.active{background:var(--azul);color:#fff}
+[data-theme="dark"] .promos{background:linear-gradient(180deg,var(--crema) 0%,#0E1530 100%)}
+[data-theme="dark"] .cuadros{background:linear-gradient(180deg,var(--superficie) 0%,#1A1330 100%)}
+[data-theme="dark"] footer{background:#060914}
+
+/* Blue text needs a lighter tone to stay readable on dark backgrounds */
+[data-theme="dark"] .menu a:hover,
+[data-theme="dark"] .filtro:hover,
+[data-theme="dark"] .info-list a:hover,
+[data-theme="dark"] .info-list .ref,
+[data-theme="dark"] .p-imprenta ul{color:var(--azul-txt)}
+[data-theme="dark"] .sec-head strong[style]{color:var(--azul-txt)!important}
+[data-theme="dark"] .btn-line{border-color:var(--azul-txt);color:var(--azul-txt)}
+[data-theme="dark"] .btn-line:hover{background:var(--azul);border-color:var(--azul);color:#fff}
+[data-theme="dark"] .field input,
+[data-theme="dark"] .field select,
+[data-theme="dark"] .field textarea{color:var(--tinta)}
+@media (max-width:640px){
+  .nav .wrap{gap:8px}
+  .theme-toggle{width:44px;height:44px}
+  .burger{flex:none;margin-left:0}
+}
+@media (max-width:360px){
+  .brand img{width:46px;height:46px}
+}

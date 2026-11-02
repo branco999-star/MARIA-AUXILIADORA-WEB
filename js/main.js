@@ -5,6 +5,31 @@
   /* Año */
   document.getElementById('year').textContent = new Date().getFullYear();
 
+  /* Modo oscuro */
+  var root = document.documentElement;
+  var themeBtn = document.getElementById('themeToggle');
+  var themeMeta = document.querySelector('meta[name="theme-color"]');
+  function applyTheme(t){
+    root.setAttribute('data-theme', t);
+    var dark = t === 'dark';
+    themeBtn.setAttribute('aria-pressed', dark ? 'true' : 'false');
+    themeBtn.setAttribute('aria-label', dark ? 'Activar modo claro' : 'Activar modo oscuro');
+    themeMeta.setAttribute('content', dark ? '#0B1023' : '#1339C9');
+  }
+  applyTheme(root.getAttribute('data-theme') === 'dark' ? 'dark' : 'light');
+  themeBtn.addEventListener('click', function(){
+    var t = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    applyTheme(t);
+    try { localStorage.setItem('theme', t); } catch (e) {}
+  });
+  // Follow system changes while the visitor has not picked a theme
+  var mq = window.matchMedia('(prefers-color-scheme: dark)');
+  if (mq.addEventListener) mq.addEventListener('change', function(e){
+    var saved = null;
+    try { saved = localStorage.getItem('theme'); } catch (err) {}
+    if (!saved) applyTheme(e.matches ? 'dark' : 'light');
+  });
+
   /* Nav scroll */
   var nav = document.getElementById('nav');
   var onScroll = function(){ nav.classList.toggle('scrolled', window.scrollY > 12); };

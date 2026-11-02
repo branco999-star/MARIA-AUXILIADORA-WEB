@@ -218,7 +218,7 @@ test("initial page weight is under 1.5 MB", async ({ page }) => {
 test("touch targets are at least 44x44 px on mobile", async ({ page }) => {
   await page.setViewportSize(MOBILE);
   await page.goto("/");
-  const small = await page.$$eval("#burger, .filtro, .btn, .fab, .field input, .field select", els =>
+  const small = await page.$$eval("#burger, #themeToggle, .filtro, .btn, .fab, .field input, .field select", els =>
     els.filter(e => e.offsetParent !== null || e.classList.contains("fab"))
       .map(e => { const r = e.getBoundingClientRect(); return { t: e.textContent.trim().slice(0, 30), w: r.width, h: r.height }; })
       .filter(r => r.w < 44 || r.h < 44));
@@ -236,10 +236,10 @@ test("reduced motion: content is visible without animations", async ({ browser }
   await context.close();
 });
 
-for (const viewport of [MOBILE, { width: 1440, height: 900 }]) {
-  test(`accessibility: no serious or critical axe violations at ${viewport.width}px`, async ({ page }) => {
+for (const colorScheme of ["light", "dark"]) for (const viewport of [MOBILE, { width: 1440, height: 900 }]) {
+  test(`accessibility: no serious or critical axe violations at ${viewport.width}px (${colorScheme})`, async ({ page }) => {
     await page.setViewportSize(viewport);
-    await page.emulateMedia({ reducedMotion: "reduce" });
+    await page.emulateMedia({ reducedMotion: "reduce", colorScheme });
     await page.goto("/");
     await scrollAll(page);
     const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]).analyze();
@@ -249,3 +249,35 @@ for (const viewport of [MOBILE, { width: 1440, height: 900 }]) {
     expect(bad).toEqual([]);
   });
 }
+
+test("dark mode follows the system preference", async ({ page }) => {
+  await page.emulateMedia({ colorScheme: "dark" });
+  await page.goto("/");
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+  const bg = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
+  expect(bg).toBe("rgb(11, 16, 35)");
+  await expect(page.locator("#themeToggle")).toHaveAttribute("aria-pressed", "true");
+});
+
+test("theme toggle switches theme and remembers the choice", async ({ page }) => {
+  await page.emulateMedia({ colorScheme: "light" });
+  await page.goto("/");
+  const html = page.locator("html");
+  const toggle = page.locator("#themeToggle");
+  await expect(html).toHaveAttribute("data-theme", "light");
+  await toggle.click();
+  await expect(html).toHaveAttribute("data-theme", "dark");
+  await expect(toggle).toHaveAttribute("aria-label", "Activar modo claro");
+  await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute("content", "#0B1023");
+  await page.reload();
+  await expect(html).toHaveAttribute("data-theme", "dark");
+  await toggle.click();
+  await expect(html).toHaveAttribute("data-theme", "light");
+});
+
+test("theme toggle is reachable on mobile", async ({ page }) => {
+  await page.setViewportSize(MOBILE);
+  await page.goto("/");
+  await expect(page.locator("#themeToggle")).toBeVisible();
+  await expect(page.locator("#burger")).toBeVisible();
+});

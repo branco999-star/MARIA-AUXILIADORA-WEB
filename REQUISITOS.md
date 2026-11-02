@@ -36,6 +36,8 @@ Web de una sola página para la Imprenta, Librería y Bazar "María Auxiliadora"
 - [x] Los filtros de la galería muestran solo la categoría elegida
 - [x] La vista ampliada se maneja con teclado (Enter, flechas, Escape) y devuelve el foco al cerrar
 - [x] El formulario exige el nombre y no guarda datos
+- [x] Modo oscuro: sigue la configuración del sistema y tiene un botón sol/luna en el menú que recuerda la elección
+- [x] El modo oscuro cumple contraste AA y no altera las fotos de productos
 
 ### Calidad
 - [x] HTML semántico: `header`, `nav`, `main`, `section`, `footer`; un solo `h1` y títulos sin saltos de nivel
