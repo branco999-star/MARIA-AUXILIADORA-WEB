@@ -1,0 +1,60 @@
+# Dependencies
+node_modules/
+
+# Visual verification captures
+screenshots/
+
+# Playwright output
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
+
+# Secrets
+.env
+.env.*
+!.env.example
+credentials.json
+token.json
+*.pem
+*.key
+*.keystore
+*.jks
+keystore/
+wallet*.json
+secrets.json
+secrets.*
+client_secret*.json
+service-account*.json
+*.p12
+*.pfx
+*.ppk
+id_rsa*
+id_ed25519*
+.npmrc
+.netrc
+.claude/settings.local.json
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS / editor
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+
+# Original source material (only optimized copies in assets/ are committed)
+/Almanaques/
+/Bolsas kraft/
+/Cajas con tu logo/
+/Cirios, velas y velones/
+/Llaveros y souvenirs/
+/Recuerdos para eventos/
+/cuadros de promocion/
+/referencia/
+
+# Local AI assistant instructions
+CLAUDE.md
