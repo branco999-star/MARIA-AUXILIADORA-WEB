@@ -1,0 +1,23 @@
+# Allowlist: publish only the website files
+/*
+!index.html
+!css/
+!js/
+!assets/
+
+# Explicitly excluded (already covered by the allowlist above)
+/Almanaques/
+/Bolsas kraft/
+/Cajas con tu logo/
+/Cirios, velas y velones/
+/Llaveros y souvenirs/
+/Recuerdos para eventos/
+/cuadros de promocion/
+/referencia/
+/tests/
+/screenshots/
+/tools/
+/node_modules/
+CLAUDE.md
+REQUISITOS.md
+.env*
