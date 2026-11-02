@@ -1,4 +1,10 @@
 /* ============ RESET & TOKENS ============ */
+/* Outfit variable font (100-900), self-hosted latin subset. License: assets/fonts/OFL.txt */
+@font-face{
+  font-family:'Outfit';font-style:normal;font-weight:100 900;font-display:swap;
+  src:url(../assets/fonts/outfit-latin.woff2) format('woff2');
+  unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
   --azul:#1339C9;
@@ -458,10 +464,11 @@ footer{background:var(--tinta);color:#fff;padding:60px 0 26px}
 .f-brand .b2{font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:var(--amarillo);font-weight:700}
 footer p{color:rgba(255,255,255,.62);font-size:.94rem;max-width:42ch}
 footer h2{font-size:.8rem;letter-spacing:.14em;text-transform:uppercase;color:var(--amarillo);margin-bottom:16px;font-weight:800}
-footer li{padding:5px 0}
+footer li{padding:5px 0;color:rgba(255,255,255,.72);font-size:.95rem}
 footer li a{color:rgba(255,255,255,.72);font-size:.95rem;transition:color .2s}
 footer li a:hover{color:#fff}
 .f-bottom{border-top:1px solid rgba(255,255,255,.13);padding-top:22px;text-align:center;font-size:.86rem;color:rgba(255,255,255,.5)}
+.f-bottom p{max-width:none}
 .f-bottom b{color:rgba(255,255,255,.78)}
 
 /* FAB */
@@ -642,4 +649,7 @@ footer li a:hover{color:#fff}
 }
 @media (max-width:360px){
   .brand img{width:46px;height:46px}
+}
+@media (max-width:640px){
+  footer{padding-bottom:96px}
 }

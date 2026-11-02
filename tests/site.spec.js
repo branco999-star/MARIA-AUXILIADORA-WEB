@@ -281,3 +281,20 @@ test("theme toggle is reachable on mobile", async ({ page }) => {
   await expect(page.locator("#themeToggle")).toBeVisible();
   await expect(page.locator("#burger")).toBeVisible();
 });
+
+test("Outfit font is self-hosted and no third-party font requests are made", async ({ page }) => {
+  const external = [];
+  page.on("request", r => { if (/fonts\.(googleapis|gstatic)\.com/.test(r.url())) external.push(r.url()); });
+  await page.goto("/", { waitUntil: "networkidle" });
+  await page.evaluate(() => document.fonts.ready);
+  const loaded = await page.evaluate(() => document.fonts.check('800 16px "Outfit"') && [...document.fonts].some(f => f.family.replace(/"/g, "") === "Outfit" && f.status === "loaded"));
+  expect(loaded).toBe(true);
+  expect(external).toEqual([]);
+});
+
+test("footer legal line uses the full width", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/");
+  const lines = await page.$eval(".f-bottom p", p => Math.round(p.getBoundingClientRect().height / parseFloat(getComputedStyle(p).lineHeight)));
+  expect(lines).toBe(1);
+});
