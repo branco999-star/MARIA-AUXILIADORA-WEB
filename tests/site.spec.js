@@ -106,7 +106,7 @@ test("contact data is visible", async ({ page }) => {
   }
   await expect(page.locator('a[href="tel:+51992262028"]').first()).toBeVisible();
   await expect(page.locator('a[href="mailto:mayorgrafsac@gmail.com"]').first()).toBeVisible();
-  await expect(page.locator("footer")).toContainText("RUC 20554556888");
+  await expect(page.locator("footer")).toContainText("RUC 20554569847");
 });
 
 test("promotion filters show only the chosen category", async ({ page }) => {
