@@ -64,6 +64,6 @@ Web de una sola página para la Imprenta, Librería y Bazar "María Auxiliadora"
 - Añadidos: imagen para compartir en redes (`og.jpg`), icono para iPhone y etiquetas Open Graph.
 
 ## Datos pendientes
-- [DOMINIO] Cuando la web esté en Vercel, poner la URL completa en `og:image` y añadir `og:url`. WhatsApp y Facebook necesitan la dirección absoluta para mostrar la vista previa.
+- La web está en https://www.imprentamariaauxiliadora.com/ (dominio propio; también responde en mariaauxiliadora-ruby.vercel.app). Ya puesta en `og:url`, `og:image` y `canonical`.
 - Confirmar que siguen vigentes: oferta del 10 % por la web, "Graduación 2026" y "Más de una década".
 - Los vídeos y PDFs de las carpetas de material original no se usan todavía. Para añadir vídeos hace falta `ffmpeg` (no instalado).
