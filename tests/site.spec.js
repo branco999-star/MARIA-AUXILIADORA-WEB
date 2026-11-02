@@ -298,3 +298,12 @@ test("footer legal line uses the full width", async ({ page }) => {
   const lines = await page.$eval(".f-bottom p", p => Math.round(p.getBoundingClientRect().height / parseFloat(getComputedStyle(p).lineHeight)));
   expect(lines).toBe(1);
 });
+
+test("Google Maps links point to the store location", async ({ page }) => {
+  await page.goto("/");
+  const hrefs = await page.$$eval('a[href*="google.com/maps"]', as => as.map(a => a.href));
+  expect(hrefs.length).toBe(2);
+  for (const h of hrefs) {
+    expect(decodeURIComponent(new URL(h).searchParams.get("query"))).toBe("Prol. 28 de Julio, Lurigancho-Chosica 15468, Perú");
+  }
+});
