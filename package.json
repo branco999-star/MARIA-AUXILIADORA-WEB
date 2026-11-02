@@ -8,6 +8,7 @@
   "devDependencies": {
     "@axe-core/playwright": "^4.14.0",
     "@playwright/test": "^1.64.1",
+    "pdfjs-dist": "^6.5.438",
     "serve": "^14.2.6"
   }
 }

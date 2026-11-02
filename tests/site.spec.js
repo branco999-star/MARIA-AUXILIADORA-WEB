@@ -82,7 +82,7 @@ test("every internal link points to an existing section", async ({ page }) => {
 
 test("all main sections exist", async ({ page }) => {
   await page.goto("/");
-  for (const id of ["inicio", "servicios", "promociones", "productos", "cuadros", "pedir", "contacto"]) {
+  for (const id of ["inicio", "servicios", "trabajos", "promociones", "productos", "cuadros", "pedir", "contacto"]) {
     await expect(page.locator(`#${id}`)).toHaveCount(1);
   }
 });
@@ -307,3 +307,101 @@ test("Google Maps links point to the store location", async ({ page }) => {
     expect(decodeURIComponent(new URL(h).searchParams.get("query"))).toBe("Prol. 28 de Julio, Lurigancho-Chosica 15468, Perú");
   }
 });
+
+test.describe("category galleries", () => {
+  const CATS = ["almanaques", "bolsas-kraft", "cajas-con-tu-logo", "cirios-velas-y-velones", "llaveros-y-souvenirs", "recuerdos-para-eventos", "cuadros-de-promocion"];
+
+  test("there is one button per material folder", async ({ page }) => {
+    await page.goto("/");
+    const ids = await page.$$eval("#trabajos .cat", bs => bs.map(b => b.dataset.cat));
+    expect(ids).toEqual(CATS);
+  });
+
+  test("every gallery file listed in galeria.json exists", async ({ page }) => {
+    const res = await page.request.get("/assets/galeria/galeria.json");
+    expect(res.ok()).toBe(true);
+    const data = await res.json();
+    expect(data.map(c => c.id)).toEqual(CATS);
+    const missing = [];
+    for (const c of data) {
+      expect(c.items.length, c.id).toBeGreaterThan(0);
+      for (const it of c.items) {
+        for (const f of [it.src, it.thumb, it.poster].filter(Boolean)) {
+          const r = await page.request.head("/" + f);
+          if (!r.ok()) missing.push(f);
+        }
+      }
+    }
+    expect(missing).toEqual([]);
+  });
+
+  test("opening a category shows its photos and videos, and the viewer works with the keyboard", async ({ page }) => {
+    await page.goto("/");
+    const opener = page.locator('.cat[data-cat="bolsas-kraft"]');
+    await opener.click();
+    const gal = page.locator("#gal");
+    await expect(gal).toBeVisible();
+    await expect(page.locator("#galTitle")).toHaveText("Bolsas kraft");
+    await expect(page.locator("#galClose")).toBeFocused();
+    await expect(page.locator("#galWa")).toHaveAttribute("href", /wa\.me\/51999759353\?text=.*Bolsas%20kraft/);
+    const thumbs = page.locator("#galBody .gal-thumb");
+    await expect(thumbs).toHaveCount(5);
+    await expect(page.locator("#galBody .gal-play")).toHaveCount(1);
+    await thumbs.first().click();
+    await expect(page.locator("#galView")).toBeVisible();
+    await expect(page.locator("#galMedia img")).toHaveAttribute("alt", "Bolsas kraft — foto 1");
+    await page.keyboard.press("ArrowLeft");
+    await expect(page.locator("#galMedia video")).toHaveCount(1);
+    await expect(page.locator("#galMedia video")).toHaveAttribute("poster", /video-01\.webp$/);
+    await page.keyboard.press("Escape");
+    await expect(page.locator("#galView")).toBeHidden();
+    await expect(gal).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(gal).toBeHidden();
+    await expect(opener).toBeFocused();
+  });
+
+  test("catalog categories show one group per PDF", async ({ page }) => {
+    await page.goto("/");
+    await page.locator('.cat[data-cat="recuerdos-para-eventos"]').click();
+    await expect(page.locator("#galBody .gal-group h3")).toHaveCount(3);
+    await expect(page.locator("#galBody .gal-thumb")).toHaveCount(128);
+    await page.locator("#galBody .gal-thumb").nth(41).click();
+    await expect(page.locator("#galMedia img")).toHaveAttribute("alt", "Catálogo de matrimonio — página 1");
+  });
+
+  test("gallery does not load anything until opened", async ({ page }) => {
+    const requested = [];
+    page.on("request", r => { if (r.url().includes("/assets/galeria/")) requested.push(r.url()); });
+    await page.goto("/", { waitUntil: "networkidle" });
+    expect(requested).toEqual([]);
+  });
+
+  for (const viewport of [{ width: 375, height: 800 }, { width: 1440, height: 900 }]) {
+    test(`open gallery has no serious axe violations at ${viewport.width}px`, async ({ page }) => {
+      await page.setViewportSize(viewport);
+      await page.emulateMedia({ reducedMotion: "reduce" });
+      await page.goto("/");
+      await page.locator('.cat[data-cat="cajas-con-tu-logo"]').click();
+      await expect(page.locator("#galBody .gal-thumb")).toHaveCount(5);
+      let results = await new AxeBuilder({ page }).include("#gal").analyze();
+      let bad = results.violations.filter(v => ["serious", "critical"].includes(v.impact)).map(v => v.id);
+      expect(bad).toEqual([]);
+      await page.locator("#galBody .gal-thumb").first().click();
+      results = await new AxeBuilder({ page }).include("#gal").analyze();
+      bad = results.violations.filter(v => ["serious", "critical"].includes(v.impact)).map(v => v.id);
+      expect(bad).toEqual([]);
+    });
+  }
+});
+
+for (const width of [1024, 1199, 1200, 1280, 1440]) {
+  test(`navigation bar fits inside the screen at ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 800 });
+    await page.goto("/");
+    const outside = await page.$$eval(".nav .wrap > *", (els, w) => els
+      .filter(e => getComputedStyle(e).display !== "none")
+      .filter(e => e.getBoundingClientRect().right > w).map(e => e.className), width);
+    expect(outside).toEqual([]);
+  });
+}

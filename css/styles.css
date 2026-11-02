@@ -653,3 +653,94 @@ footer li a:hover{color:#fff}
 @media (max-width:640px){
   footer{padding-bottom:96px}
 }
+
+/* ============ TRABAJOS POR CATEGORÍA ============ */
+.trabajos{background:#F2F5FF}
+.cats{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px}
+.cat{
+  display:flex;align-items:center;gap:16px;padding:18px 20px;border-radius:var(--r-md);text-align:left;
+  background:#fff;border:2px solid transparent;box-shadow:0 2px 10px rgba(16,24,64,.05);
+  transition:transform .2s ease, border-color .2s ease, box-shadow .2s ease;
+}
+.cat:hover{transform:translateY(-4px);border-color:var(--azul);box-shadow:var(--sombra)}
+.cat:active{transform:scale(.98)}
+.cat-ico{width:54px;height:54px;border-radius:16px;display:grid;place-items:center;flex:none;color:#fff;background:var(--azul)}
+.cat:nth-child(6n+2) .cat-ico{background:var(--rosa)}
+.cat:nth-child(6n+3) .cat-ico{background:var(--verde)}
+.cat:nth-child(6n+4) .cat-ico{background:var(--naranja)}
+.cat:nth-child(6n+5) .cat-ico{background:var(--morado)}
+.cat:nth-child(6n+6) .cat-ico{background:var(--amarillo-osc)}
+.cat-txt{display:flex;flex-direction:column;min-width:0}
+.cat-txt b{font-size:1.05rem;line-height:1.25}
+.cat-txt small{font-size:.86rem;color:var(--gris);font-weight:600;margin-top:2px}
+
+/* Gallery dialog */
+.gal{position:fixed;inset:0;z-index:1000;background:rgba(8,12,32,.72);display:flex;align-items:center;justify-content:center;padding:24px}
+.gal[hidden]{display:none}
+.gal-panel{
+  background:var(--crema);width:min(1100px,100%);max-height:calc(100vh - 48px);overflow:auto;
+  border-radius:var(--r-lg);box-shadow:var(--sombra-alta);animation:pop .3s ease;
+}
+.gal-head{
+  position:sticky;top:0;z-index:1;display:flex;align-items:center;gap:12px;padding:16px 24px;
+  background:var(--crema);border-bottom:1px solid var(--gris-cla);
+}
+.gal-head h2{font-size:clamp(1.15rem,3vw,1.5rem);margin-right:auto}
+.gal-head .btn-sm{min-height:44px}
+.gal-close{width:44px;height:44px;border-radius:50%;flex:none;background:var(--gris-cla);font-size:1.6rem;line-height:1;transition:transform .2s ease}
+.gal-close:hover{transform:rotate(90deg)}
+.gal-body{padding:8px 24px 28px;color:var(--gris)}
+.gal-group h3{font-size:1.05rem;margin:20px 0 12px;color:var(--tinta)}
+.gal-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.gal-thumb{position:relative;display:block;border-radius:14px;overflow:hidden;aspect-ratio:4/5;background:var(--gris-cla);box-shadow:var(--sombra)}
+.gal-thumb img{width:100%;height:100%;object-fit:cover;transition:transform .4s ease}
+.gal-thumb:hover img{transform:scale(1.05)}
+.gal-play{
+  position:absolute;left:10px;bottom:10px;width:40px;height:40px;border-radius:50%;
+  background:rgba(255,255,255,.94);box-shadow:0 4px 14px rgba(0,0,0,.25);
+}
+.gal-play::after{content:'';position:absolute;left:15px;top:12px;border-style:solid;border-width:8px 0 8px 13px;border-color:transparent transparent transparent var(--azul)}
+
+/* Gallery viewer */
+.gal-view{
+  position:fixed;inset:0;z-index:1001;background:rgba(8,12,32,.95);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;padding:76px 72px 24px;
+}
+.gal-view[hidden]{display:none}
+.gv-media{display:flex;justify-content:center;max-width:100%}
+.gv-media img,.gv-media video{
+  max-width:min(1000px,100%);max-height:calc(100vh - 160px);width:auto;height:auto;
+  border-radius:12px;background:#000;box-shadow:0 30px 80px rgba(0,0,0,.6);
+}
+.gv-caption{color:rgba(255,255,255,.75);font-size:.93rem;margin-top:14px;text-align:center}
+.gv-btn{
+  position:absolute;width:52px;height:52px;border-radius:50%;background:rgba(255,255,255,.14);
+  display:grid;place-items:center;color:#fff;font-size:1.6rem;transition:transform .2s ease, background .2s ease;
+}
+.gv-btn:hover{background:rgba(255,255,255,.28)}
+.gv-close{top:18px;right:18px}
+.gv-prev{left:14px;top:50%;transform:translateY(-50%)}
+.gv-next{right:14px;top:50%;transform:translateY(-50%)}
+.gv-btn svg{width:24px;height:24px}
+@media (max-width:640px){
+  .gal{padding:0}
+  .gal-panel{max-height:100vh;height:100%;border-radius:0}
+  .gal-head{padding:12px 16px}
+  .gal-body{padding:4px 16px 24px}
+  .gal-grid{grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px}
+  .gal-view{padding:84px 12px 20px}
+  .gv-prev,.gv-next{top:18px;transform:none;width:48px;height:48px}
+  .gv-next{left:72px;right:auto}
+  .gv-close{width:48px;height:48px}
+}
+@media (prefers-reduced-motion:reduce){
+  .gal-panel{animation:none}
+}
+[data-theme="dark"] .trabajos{background:#0E1530}
+[data-theme="dark"] .cat{background:var(--superficie)}
+/* The full desktop menu needs ~1150px; use the burger menu below that */
+@media (max-width:1199px){
+  .menu,.nav-cta{display:none}
+  .burger{display:flex;margin-left:10px}
+  .theme-toggle{margin-left:auto}
+}

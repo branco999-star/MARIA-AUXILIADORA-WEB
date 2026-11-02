@@ -140,6 +140,121 @@
     if (e.key === 'ArrowRight') show(idx+1);
   });
 
+  /* Galería por categorías */
+  var gal = document.getElementById('gal'),
+      galTitle = document.getElementById('galTitle'),
+      galBody = document.getElementById('galBody'),
+      galWa = document.getElementById('galWa'),
+      galView = document.getElementById('galView'),
+      galMedia = document.getElementById('galMedia'),
+      galCaption = document.getElementById('galCaption'),
+      galData = null, galCat = null, galIdx = 0, galOpener = null, galThumb = null;
+
+  function loadGaleria(){
+    if (!galData) galData = fetch('assets/galeria/galeria.json').then(function(r){
+      if (!r.ok) throw new Error(r.status);
+      return r.json();
+    });
+    return galData;
+  }
+  function el(tag, attrs, text){
+    var e = document.createElement(tag);
+    for (var k in attrs) e.setAttribute(k, attrs[k]);
+    if (text) e.textContent = text;
+    return e;
+  }
+  function renderGaleria(cat){
+    galBody.textContent = '';
+    var groups = [];
+    cat.items.forEach(function(it, i){
+      var name = it.type === 'page' ? it.group : (it.type === 'video' ? 'Vídeos' : 'Fotos');
+      var g = groups.filter(function(x){ return x.name === name; })[0];
+      if (!g){ g = { name: name, items: [] }; groups.push(g); }
+      g.items.push({ it: it, i: i });
+    });
+    groups.forEach(function(g){
+      var sec = el('div', { 'class': 'gal-group' });
+      sec.appendChild(el('h3', {}, g.name + ' (' + g.items.length + ')'));
+      var grid = el('div', { 'class': 'gal-grid' });
+      g.items.forEach(function(x){
+        var b = el('button', { 'class': 'gal-thumb', type: 'button', 'aria-label': 'Ver ' + x.it.alt });
+        b.appendChild(el('img', { src: x.it.thumb, alt: '', loading: 'lazy', decoding: 'async', width: 360, height: Math.round(360 * x.it.h / x.it.w) }));
+        if (x.it.type === 'video') b.appendChild(el('span', { 'class': 'gal-play', 'aria-hidden': 'true' }));
+        b.addEventListener('click', function(){ openView(x.i, b); });
+        grid.appendChild(b);
+      });
+      sec.appendChild(grid);
+      galBody.appendChild(sec);
+    });
+  }
+  function openGaleria(id, opener){
+    galOpener = opener;
+    galTitle.textContent = opener.querySelector('b').textContent;
+    galWa.href = WA + encodeURIComponent('Hola, vi en la página web la galería de "' + galTitle.textContent + '" y quisiera cotizar.');
+    galBody.textContent = 'Cargando…';
+    gal.hidden = false;
+    document.body.style.overflow = 'hidden';
+    document.getElementById('galClose').focus();
+    loadGaleria().then(function(data){
+      galCat = data.filter(function(c){ return c.id === id; })[0];
+      if (galCat) renderGaleria(galCat);
+    }).catch(function(){ galBody.textContent = 'No se pudo cargar la galería. Inténtalo de nuevo.'; });
+  }
+  function closeGaleria(){
+    closeView();
+    gal.hidden = true;
+    document.body.style.overflow = '';
+    if (galOpener) galOpener.focus();
+  }
+  function showView(i){
+    var items = galCat.items;
+    galIdx = (i + items.length) % items.length;
+    var it = items[galIdx];
+    galMedia.textContent = '';
+    var m = it.type === 'video'
+      ? el('video', { src: it.src, poster: it.poster, controls: '', playsinline: '', muted: '', preload: 'metadata', width: it.w, height: it.h, 'aria-label': it.alt })
+      : el('img', { src: it.src, alt: it.alt, width: it.w, height: it.h });
+    galMedia.appendChild(m);
+    galCaption.textContent = it.alt + ' · ' + (galIdx + 1) + ' de ' + items.length;
+  }
+  function openView(i, thumb){
+    galThumb = thumb;
+    galView.hidden = false;
+    showView(i);
+    document.getElementById('gvClose').focus();
+  }
+  function closeView(){
+    if (galView.hidden) return;
+    galView.hidden = true;
+    galMedia.textContent = '';
+    if (galThumb) galThumb.focus();
+  }
+
+  document.querySelectorAll('.cat').forEach(function(b){
+    b.addEventListener('click', function(){ openGaleria(b.dataset.cat, b); });
+  });
+  document.getElementById('galClose').addEventListener('click', closeGaleria);
+  document.getElementById('gvClose').addEventListener('click', closeView);
+  document.getElementById('gvPrev').addEventListener('click', function(){ showView(galIdx - 1); });
+  document.getElementById('gvNext').addEventListener('click', function(){ showView(galIdx + 1); });
+  gal.addEventListener('click', function(e){ if (e.target === gal) closeGaleria(); });
+  galView.addEventListener('click', function(e){ if (e.target === galView) closeView(); });
+  document.addEventListener('keydown', function(e){
+    if (gal.hidden) return;
+    var viewing = !galView.hidden;
+    if (e.key === 'Escape'){ e.preventDefault(); if (viewing) closeView(); else closeGaleria(); return; }
+    if (viewing && e.key === 'ArrowLeft') showView(galIdx - 1);
+    if (viewing && e.key === 'ArrowRight') showView(galIdx + 1);
+    // Keep keyboard focus inside the open layer
+    if (e.key === 'Tab'){
+      var layer = viewing ? galView : gal.querySelector('.gal-panel');
+      var f = layer.querySelectorAll('button, a[href], video[controls]');
+      var first = f[0], last = f[f.length - 1];
+      if (e.shiftKey && document.activeElement === first){ e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last){ e.preventDefault(); first.focus(); }
+    }
+  });
+
   /* Formulario -> WhatsApp */
   document.getElementById('cotiza').addEventListener('submit', function(e){
     e.preventDefault();
