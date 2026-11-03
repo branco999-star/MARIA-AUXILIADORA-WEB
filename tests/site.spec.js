@@ -39,7 +39,7 @@ test("no console errors and no failed resources", async ({ page }) => {
   await scrollAll(page);
   await page.waitForLoadState("networkidle");
   // Local files referenced from the head must exist too
-  for (const href of ["assets/img/og.jpg", "assets/img/apple-touch-icon.png", "assets/img/logo.webp"]) {
+  for (const href of ["assets/img/og.jpg", "assets/img/apple-touch-icon.png", "assets/img/logo.webp", "assets/img/favicon.png"]) {
     const r = await page.request.get("/" + href);
     if (!r.ok()) failed.push(`${r.status()} ${href}`);
   }
