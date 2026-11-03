@@ -313,7 +313,7 @@ test("Google Maps links and embedded map point to the store", async ({ page }) =
 async function openService(page, id) {
   const card = page.locator(`.svc-card[data-gal="${id}"]`);
   const title = await card.getAttribute("data-title");
-  await page.getByRole("button", { name: `Ver ${title}`, exact: true }).click();
+  await page.locator(".svc-tabs").getByRole("button", { name: title, exact: true }).click();
   await expect(card).toHaveClass(/\bon\b/);
   await card.click();
   return card;
@@ -589,6 +589,48 @@ test.describe("hero video sound", () => {
 test.describe("service carousel", () => {
   const active = page => page.locator(".svc-card.on");
   const activeColor = page => page.$$eval(".svc-color", els => els.findIndex(e => e.classList.contains("on")));
+  const pill = (page, name) => page.locator(".svc-tabs").getByRole("button", { name, exact: true });
+  const PILLS = ["Almanaques", "Bolsas kraft", "Cajas con tu logo", "Cirios, velas y velones", "Llaveros y souvenirs", "Invitaciones", "Cuadros de promoción", "Diseño gráfico"];
+
+  test("named pills list every service and jump straight to its card without opening the gallery", async ({ page }) => {
+    await page.goto("/");
+    await page.locator(".svc-stage").scrollIntoViewIfNeeded();
+    await expect(page.locator(".svc-tabs .svc-dot")).toHaveText(PILLS);
+    const order = await page.$$eval(".svc-card", els => els.map(e => e.dataset.title));
+    expect(order).toEqual(PILLS);
+    await pill(page, "Invitaciones").click();
+    await expect(active(page)).toHaveAttribute("data-gal", "invitaciones");
+    await expect(pill(page, "Invitaciones")).toHaveAttribute("aria-current", "true");
+    await expect(page.locator(".svc-tabs [aria-current]")).toHaveCount(1);
+    await expect(page.locator("#gal")).toBeHidden();
+  });
+
+  test("autoplay stops for good once the visitor picks a service", async ({ page }) => {
+    await page.goto("/");
+    await page.locator(".svc-stage").scrollIntoViewIfNeeded();
+    await pill(page, "Cajas con tu logo").click();
+    await page.mouse.move(1, 1);
+    await page.locator("body").evaluate(() => document.activeElement.blur());
+    await page.waitForTimeout(4500);
+    await expect(active(page)).toHaveAttribute("data-gal", "cajas-con-tu-logo");
+  });
+
+  test("on mobile the pill row scrolls inside the stage and keeps the current pill visible", async ({ page }) => {
+    await page.setViewportSize(MOBILE);
+    await page.goto("/");
+    await page.locator(".svc-stage").scrollIntoViewIfNeeded();
+    const [scrollW, clientW] = await page.locator(".svc-tabs").evaluate(e => [e.scrollWidth, e.clientWidth]);
+    expect(scrollW).toBeGreaterThan(clientW);
+    await page.getByRole("button", { name: "Servicio anterior" }).click();
+    await expect(active(page)).toHaveAttribute("data-gal", "diseno-grafico");
+    const last = pill(page, "Diseño gráfico");
+    await expect(async () => {
+      const [p, t] = await Promise.all([last.boundingBox(), page.locator(".svc-tabs").boundingBox()]);
+      expect(p.x).toBeGreaterThanOrEqual(t.x - 1);
+      expect(p.x + p.width).toBeLessThanOrEqual(t.x + t.width + 1);
+    }).toPass();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(MOBILE.width);
+  });
 
   test("arrows, keys and dots move the deck, the stage colour and the current dot", async ({ page }) => {
     await page.goto("/");
@@ -599,12 +641,12 @@ test.describe("service carousel", () => {
     await page.getByRole("button", { name: "Servicio siguiente" }).click();
     await expect(active(page)).toHaveAttribute("data-gal", "bolsas-kraft");
     expect(await activeColor(page)).toBe(1);
-    await expect(page.getByRole("button", { name: "Ver Bolsas kraft", exact: true })).toHaveAttribute("aria-current", "true");
+    await expect(pill(page, "Bolsas kraft")).toHaveAttribute("aria-current", "true");
     await page.keyboard.press("ArrowRight");
     await expect(active(page)).toHaveAttribute("data-gal", "cajas-con-tu-logo");
     await page.keyboard.press("ArrowLeft");
     await expect(active(page)).toHaveAttribute("data-gal", "bolsas-kraft");
-    await page.getByRole("button", { name: "Ver Cuadros de promoción", exact: true }).click();
+    await pill(page, "Cuadros de promoción").click();
     await expect(active(page)).toHaveAttribute("data-gal", "cuadros-de-promocion");
     expect(await activeColor(page)).toBe(6);
     await page.getByRole("button", { name: "Servicio siguiente" }).click();

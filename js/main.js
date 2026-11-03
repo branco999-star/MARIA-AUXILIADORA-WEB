@@ -365,8 +365,11 @@
   if (svc){
     var svcCards = Array.prototype.slice.call(svc.querySelectorAll('.svc-card'));
     var svcColors = svc.querySelectorAll('.svc-color');
-    var svcDots = svc.querySelectorAll('.svc-dot');
+    var svcTabs = svc.querySelector('.svc-tabs');
+    var svcDots = svcTabs.querySelectorAll('.svc-dot');
     var SVC_MS = 3500, svcIdx = 0, svcTimer = null, svcHover = false, svcFocus = false, svcSeen = false;
+    // Once the visitor picks or moves a card, autoplay stops for good so they can look calmly
+    var svcStopped = false;
     var svcN = svcCards.length;
 
     var svcGo = function(i){
@@ -387,25 +390,35 @@
         if (k === svcIdx) svcDots[k].setAttribute('aria-current', 'true');
         else svcDots[k].removeAttribute('aria-current');
       }
+      // Keep the current pill in view when the pill row scrolls sideways (mobile), without moving the page
+      if (svcTabs.scrollWidth > svcTabs.clientWidth){
+        var pill = svcDots[svcIdx];
+        svcTabs.scrollTo({left: pill.offsetLeft - (svcTabs.clientWidth - pill.offsetWidth) / 2, behavior: reduceMotion ? 'auto' : 'smooth'});
+      }
     };
     var svcPlay = function(){
       clearInterval(svcTimer);
       svcTimer = null;
-      if (reduceMotion || svcHover || svcFocus || !svcSeen || document.hidden) return;
+      if (svcStopped || reduceMotion || svcHover || svcFocus || !svcSeen || document.hidden) return;
       svcTimer = setInterval(function(){ svcGo(svcIdx + 1); }, SVC_MS);
+    };
+    var svcUser = function(i){
+      svcStopped = true;
+      svcPlay();
+      svcGo(i);
     };
 
     svcCards.forEach(function(c, k){
-      c.addEventListener('click', function(){ svcGo(k); });
+      c.addEventListener('click', function(){ svcUser(k); });
     });
     Array.prototype.forEach.call(svcDots, function(d, k){
-      d.addEventListener('click', function(){ svcGo(k); });
+      d.addEventListener('click', function(){ svcUser(k); });
     });
-    svc.querySelector('.svc-prev').addEventListener('click', function(){ svcGo(svcIdx - 1); });
-    svc.querySelector('.svc-next').addEventListener('click', function(){ svcGo(svcIdx + 1); });
+    svc.querySelector('.svc-prev').addEventListener('click', function(){ svcUser(svcIdx - 1); });
+    svc.querySelector('.svc-next').addEventListener('click', function(){ svcUser(svcIdx + 1); });
     svc.addEventListener('keydown', function(e){
-      if (e.key === 'ArrowLeft'){ e.preventDefault(); svcGo(svcIdx - 1); }
-      if (e.key === 'ArrowRight'){ e.preventDefault(); svcGo(svcIdx + 1); }
+      if (e.key === 'ArrowLeft'){ e.preventDefault(); svcUser(svcIdx - 1); }
+      if (e.key === 'ArrowRight'){ e.preventDefault(); svcUser(svcIdx + 1); }
     });
     svc.addEventListener('mouseenter', function(){ svcHover = true; svcPlay(); });
     svc.addEventListener('mouseleave', function(){ svcHover = false; svcPlay(); });
@@ -423,7 +436,7 @@
       if (svcX === null) return;
       var dx = e.clientX - svcX;
       svcX = null;
-      if (Math.abs(dx) > 40){ svcSwiped = true; svcGo(svcIdx + (dx < 0 ? 1 : -1)); svcPlay(); }
+      if (Math.abs(dx) > 40){ svcSwiped = true; svcUser(svcIdx + (dx < 0 ? 1 : -1)); }
     });
     svcTrack.addEventListener('pointercancel', function(){ svcX = null; });
     // A swipe must not also open the gallery of the card it started on
