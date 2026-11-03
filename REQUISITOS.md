@@ -38,8 +38,10 @@ Web de una sola página para la Imprenta, Librería y Bazar "María Auxiliadora"
 - [x] El formulario exige el nombre y no guarda datos
 - [x] Modo oscuro: sigue la configuración del sistema y tiene un botón sol/luna en el menú que recuerda la elección
 - [x] El modo oscuro cumple contraste AA y no altera las fotos de productos
-- [x] En «Todo lo que hacemos», los servicios con material (con aspecto de carpeta y contador de fotos/vídeos) abren su galería de fotos, vídeos y catálogos, usable con teclado
-- [x] La galería no descarga nada hasta que se abre una categoría
+- [x] En «Todo lo que hacemos», los servicios con material se muestran en un carrusel 3D de tarjetas (foto real, título y contador de fotos/vídeos); al tocar una tarjeta se abre su galería, usable con teclado
+- [x] El fondo del carrusel cambia de color con cada tarjeta (paleta de marca) y la tarjeta activa se balancea suavemente (inspirado en el shot "EdTech Mascot Character Animation" de Abron Studio, sin mascota)
+- [x] El carrusel se mueve con flechas, puntos, teclas ← → y deslizando en móvil; avanza solo cada 3,5 s cuando está a la vista, se pausa con el ratón o el foco encima y no se mueve solo con «reducir movimiento»
+- [x] La galería no descarga nada hasta que se abre una categoría (salvo las 8 miniaturas de portada del carrusel)
 - [x] Para regenerar la galería tras cambiar las carpetas: `FFMPEG=<ruta a ffmpeg.exe> node tools/build-gallery.mjs` (con `npm run serve` en marcha)
 
 ### Calidad
@@ -53,6 +55,17 @@ Web de una sola página para la Imprenta, Librería y Bazar "María Auxiliadora"
 - [x] Imágenes WebP con `width`/`height` y `loading="lazy"` salvo las primeras visibles
 - [x] Página inicial de menos de 1,5 MB
 - [x] Consola sin errores y sin recursos 404
+
+### Campaña Almanaques 2027 (portada)
+- [x] La portada cambia sola cada 15 segundos entre 4 escenas (fachada → 3 vídeos de almanaques), cada vez con más presencia de la campaña
+- [x] Los vídeos se ven en una tarjeta vertical tipo móvil y solo se descargan cuando les toca
+- [x] Los vídeos tienen sonido: empiezan silenciados (los navegadores no permiten reproducir sonido automáticamente) y el botón de altavoz o la burbuja «Toca para escuchar» lo activan para toda la visita
+- [x] Los vídeos de las galerías también tienen sonido (salvo el de Bolsas kraft, que no tiene audio en el original)
+- [x] Botones de WhatsApp de la campaña con el mensaje "Hola, quiero cotizar almanaques 2027 para mi negocio."
+- [x] Avanza sola desde la primera escena (aunque el ratón esté encima); barras de progreso, flechas sutiles ‹ › y botón de pausa para navegar
+- [x] Con "movimiento reducido" activado las escenas siguen avanzando, pero sin animaciones ni vídeo automático
+- [x] "Ver modelos" abre la galería de Almanaques (ahora con 3 vídeos)
+- [x] Para regenerar los clips de la portada: `FFMPEG=<ruta a ffmpeg.exe> node tools/build-hero-clips.mjs`
 
 ## Supuestos
 - Se mantiene la paleta completa de la web anterior (incluye rosa, morado, verde y naranja además de los colores de marca), porque esa web es la base. Solo se oscurecen los colores que no cumplan el contraste AA.
