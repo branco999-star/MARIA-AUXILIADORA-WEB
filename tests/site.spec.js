@@ -89,7 +89,7 @@ test("all main sections exist", async ({ page }) => {
 
 test("WhatsApp calls to action point to the business number", async ({ page }) => {
   await page.goto("/");
-  const heroCta = page.locator(".hero a.btn-wa");
+  const heroCta = page.locator('.hero .scene[data-scene="0"] a.btn-wa');
   await expect(heroCta).toBeVisible();
   await expect(heroCta).toHaveAttribute("href", new RegExp(`wa\\.me/${WA_NUMBER}`));
   await expect(page.locator("a.fab")).toBeVisible();
@@ -195,7 +195,7 @@ test("images have alt, size attributes, WebP and lazy loading below the fold", a
   const imgs = await page.$$eval("main img, nav img, footer img", els => els.map(i => ({
     src: i.getAttribute("src"), alt: i.getAttribute("alt"), w: i.getAttribute("width"), h: i.getAttribute("height"), lazy: i.getAttribute("loading"),
   })));
-  expect(imgs.length).toBe(40);
+  expect(imgs.length).toBe(49);
   for (const i of imgs) {
     expect(i.alt, i.src).not.toBeNull();
     expect(i.w && i.h, i.src).toBeTruthy();
@@ -309,21 +309,28 @@ test("Google Maps links and embedded map point to the store", async ({ page }) =
   expect(decodeURIComponent(await map.getAttribute("src"))).toContain("Imprenta+\"Maria+Auxiliadora\",+Prol.+28+de+Julio,+Lurigancho-Chosica+15468");
 });
 
+// Bring a service card to the centre of the carousel (via its dot, which also pauses autoplay) and open its gallery
+async function openService(page, id) {
+  const card = page.locator(`.svc-card[data-gal="${id}"]`);
+  const title = await card.getAttribute("data-title");
+  await page.getByRole("button", { name: `Ver ${title}`, exact: true }).click();
+  await expect(card).toHaveClass(/\bon\b/);
+  await card.click();
+  return card;
+}
+
 test.describe("category galleries", () => {
   const CATS = ["almanaques", "bolsas-kraft", "cajas-con-tu-logo", "cirios-velas-y-velones", "llaveros-y-souvenirs", "recuerdos-para-eventos", "cuadros-de-promocion", "diseno-grafico"];
 
-  test("the service list has one gallery button per material folder, and no separate gallery section", async ({ page }) => {
+  test("the service carousel has one gallery card per material folder, and no separate gallery section", async ({ page }) => {
     await page.goto("/");
-    const ids = await page.$$eval(".servicios .chips .chip-gal", bs => bs.map(b => b.tagName + ":" + b.dataset.gal));
+    const ids = await page.$$eval(".servicios .svc-track .svc-card", bs => bs.map(b => b.tagName + ":" + b.dataset.gal));
     expect(ids).toEqual(CATS.map(c => "BUTTON:" + c));
     await expect(page.locator("#trabajos")).toHaveCount(0);
     await expect(page.locator('a[href="#trabajos"]')).toHaveCount(0);
-    const staticChips = await page.$$eval(".chips .chip:not(.chip-gal)", els => els.map(e => e.tagName));
+    const staticChips = await page.$$eval(".chips .chip", els => els.map(e => e.tagName));
     expect(staticChips.length).toBe(20);
     expect(new Set(staticChips)).toEqual(new Set(["DIV"]));
-    await page.setViewportSize({ width: 1440, height: 900 });
-    const [galW, chipW] = await page.evaluate(() => [".chip-gal", ".chip:not(.chip-gal)"].map(s => Math.round(document.querySelector(s).getBoundingClientRect().width)));
-    expect(galW).toBe(chipW);
   });
 
   test("every gallery file listed in galeria.json exists", async ({ page }) => {
@@ -346,8 +353,7 @@ test.describe("category galleries", () => {
 
   test("opening a category shows its photos and videos, and the viewer works with the keyboard", async ({ page }) => {
     await page.goto("/");
-    const opener = page.locator('.chip-gal[data-gal="bolsas-kraft"]');
-    await opener.click();
+    const opener = await openService(page, "bolsas-kraft");
     const gal = page.locator("#gal");
     await expect(gal).toBeVisible();
     await expect(page.locator("#galTitle")).toHaveText("Bolsas kraft");
@@ -372,18 +378,21 @@ test.describe("category galleries", () => {
 
   test("catalog categories show one group per PDF", async ({ page }) => {
     await page.goto("/");
-    await page.locator('.chip-gal[data-gal="recuerdos-para-eventos"]').click();
+    await openService(page, "recuerdos-para-eventos");
     await expect(page.locator("#galBody .gal-group h3")).toHaveCount(3);
     await expect(page.locator("#galBody .gal-thumb")).toHaveCount(128);
     await page.locator("#galBody .gal-thumb").nth(41).click();
     await expect(page.locator("#galMedia img")).toHaveAttribute("alt", "Catálogo de matrimonio — página 1");
   });
 
-  test("gallery does not load anything until opened", async ({ page }) => {
+  test("gallery does not load anything until opened, beyond the carousel cover thumbnails", async ({ page }) => {
     const requested = [];
-    page.on("request", r => { if (r.url().includes("/assets/galeria/")) requested.push(r.url()); });
+    page.on("request", r => { if (r.url().includes("/assets/galeria/")) requested.push(new URL(r.url()).pathname.slice(1)); });
     await page.goto("/", { waitUntil: "networkidle" });
-    expect(requested).toEqual([]);
+    const covers = await page.$$eval(".svc-card img", imgs => imgs.map(i => i.getAttribute("src")));
+    expect(covers).toHaveLength(8);
+    expect(covers.every(c => /-mini\.webp$/.test(c))).toBe(true);
+    expect(requested.filter(u => !covers.includes(u))).toEqual([]);
   });
 
   for (const viewport of [{ width: 375, height: 800 }, { width: 1440, height: 900 }]) {
@@ -391,7 +400,7 @@ test.describe("category galleries", () => {
       await page.setViewportSize(viewport);
       await page.emulateMedia({ reducedMotion: "reduce" });
       await page.goto("/");
-      await page.locator('.chip-gal[data-gal="cajas-con-tu-logo"]').click();
+      await openService(page, "cajas-con-tu-logo");
       await expect(page.locator("#galBody .gal-thumb")).toHaveCount(5);
       let results = await new AxeBuilder({ page }).include("#gal").analyze();
       let bad = results.violations.filter(v => ["serious", "critical"].includes(v.impact)).map(v => v.id);
@@ -414,3 +423,242 @@ for (const width of [1024, 1199, 1200, 1280, 1440]) {
     expect(outside).toEqual([]);
   });
 }
+
+test.describe("hero almanac campaign scenes", () => {
+  const ALMANAC_WA = "wa.me/51999759353?text=Hola%2C%20quiero%20cotizar%20almanaques%202027%20para%20mi%20negocio.";
+
+  test("four scenes, only the first visible, still one h1", async ({ page }) => {
+    await page.goto("/");
+    await expect(page.locator("#inicio .scene")).toHaveCount(4);
+    await expect(page.locator("h1")).toHaveCount(1);
+    await expect(page.locator('#inicio .scene[data-scene="0"]')).toBeVisible();
+    for (const i of [1, 2, 3]) {
+      const s = page.locator(`#inicio .scene[data-scene="${i}"]`);
+      await expect(s).toHaveAttribute("aria-hidden", "true");
+      await expect(s).toHaveAttribute("inert", "");
+    }
+  });
+
+  test("hero videos are muted, inline, not preloaded, and nothing is downloaded at load", async ({ page }) => {
+    const videoRequests = [];
+    page.on("request", r => { if (r.url().includes("/assets/video/") && r.url().endsWith(".mp4")) videoRequests.push(r.url()); });
+    await page.goto("/", { waitUntil: "networkidle" });
+    const vids = await page.$$eval("#inicio video", vs => vs.map(v => ({ muted: v.muted, inline: v.hasAttribute("playsinline"), preload: v.getAttribute("preload"), src: v.getAttribute("src"), poster: v.getAttribute("poster") })));
+    expect(vids).toHaveLength(3);
+    for (const v of vids) {
+      expect(v.muted).toBe(true);
+      expect(v.inline).toBe(true);
+      expect(v.preload).toBe("none");
+      expect(v.src).toBeNull();
+      expect(v.poster).toMatch(/\.webp$/);
+    }
+    expect(videoRequests).toEqual([]);
+  });
+
+  test("progress bars jump to a scene; the last one shows the big almanac CTA", async ({ page }) => {
+    await page.goto("/");
+    await page.getByRole("button", { name: /Ver escena 4/ }).click();
+    const last = page.locator('#inicio .scene[data-scene="3"]');
+    await expect(last).toBeVisible();
+    await expect(last).not.toHaveAttribute("aria-hidden", "true");
+    const cta = last.getByRole("link", { name: /Cotizar almanaques por WhatsApp/ });
+    await expect(cta).toBeVisible();
+    await expect(cta).toHaveAttribute("href", "https://" + ALMANAC_WA);
+    await expect(page.locator("#inicio")).toHaveAttribute("data-scene", "3");
+    await expect(page.locator('#inicio .scene[data-scene="0"]')).toHaveAttribute("aria-hidden", "true");
+  });
+
+  test("teaser in the first scene opens the campaign", async ({ page }) => {
+    await page.goto("/");
+    await page.getByRole("button", { name: /Campaña Almanaques 2027/ }).click();
+    await expect(page.locator("#inicio")).toHaveAttribute("data-scene", "1");
+  });
+
+  test("scenes advance automatically and the pause button stops them", async ({ page }) => {
+    await page.clock.install();
+    await page.goto("/");
+    const hero = page.locator("#inicio");
+    await page.mouse.move(5, 5);
+    await page.clock.runFor(15100);
+    await expect(hero).toHaveAttribute("data-scene", "1");
+    await page.locator("#scenePause").click();
+    await expect(page.locator("#scenePause")).toHaveAttribute("aria-pressed", "true");
+    await page.mouse.move(5, 5);
+    await page.clock.runFor(20000);
+    await expect(hero).toHaveAttribute("data-scene", "1");
+    await page.locator("#scenePause").click();
+    await page.mouse.move(5, 5);
+    await page.locator("#scenePause").blur();
+    await page.clock.runFor(15100);
+    await expect(hero).toHaveAttribute("data-scene", "2");
+  });
+
+  test("advances on its own from the very first scene, even with the mouse over it or reduced motion", async ({ browser }) => {
+    for (const reducedMotion of ["no-preference", "reduce"]) {
+      const context = await browser.newContext({ reducedMotion, viewport: { width: 1440, height: 900 } });
+      const page = await context.newPage();
+      await page.clock.install();
+      await page.goto("/");
+      const hero = page.locator("#inicio");
+      await page.mouse.move(700, 500); // pointer resting on the hero
+      await page.clock.runFor(15100);
+      await expect(hero, reducedMotion).toHaveAttribute("data-scene", "1");
+      await expect(page.locator("#scenePause")).toHaveAttribute("aria-pressed", "false");
+      // Clicking a progress bar must not leave it stuck afterwards
+      await page.getByRole("button", { name: /Ver escena 3/ }).click();
+      await page.clock.runFor(15100);
+      await expect(hero, reducedMotion).toHaveAttribute("data-scene", "3");
+      await context.close();
+    }
+  });
+
+  test("subtle arrows move to the previous and next scene, wrapping around", async ({ page }) => {
+    for (const width of [375, 1440]) {
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto("/");
+      const hero = page.locator("#inicio");
+      const next = page.getByRole("button", { name: "Escena siguiente" });
+      const prev = page.getByRole("button", { name: "Escena anterior" });
+      await expect(next).toBeVisible();
+      await expect(prev).toBeVisible();
+      await next.click();
+      await expect(hero).toHaveAttribute("data-scene", "1");
+      await prev.click();
+      await prev.click();
+      await expect(hero).toHaveAttribute("data-scene", "3");
+      const box = await next.boundingBox();
+      expect(box.width).toBeGreaterThanOrEqual(44);
+      expect(box.x + box.width).toBeLessThanOrEqual(width);
+    }
+  });
+
+  test("'Ver modelos' opens the almanac gallery with the new video", async ({ page }) => {
+    await page.goto("/");
+    await page.getByRole("button", { name: /Ver escena 2/ }).click();
+    await page.locator('#inicio .scene[data-scene="1"] [data-gal="almanaques"]').click();
+    await expect(page.locator("#galTitle")).toHaveText("Almanaques");
+    await expect(page.locator("#galBody .gal-play")).toHaveCount(3);
+    await expect(page.locator('.svc-card[data-gal="almanaques"] small')).toHaveText("1 foto · 3 vídeos");
+  });
+
+  for (const scene of [1, 2, 3]) {
+    test(`scene ${scene + 1} has no serious axe violations and no horizontal scroll on mobile`, async ({ page }) => {
+      await page.setViewportSize({ width: 375, height: 800 });
+      await page.emulateMedia({ reducedMotion: "reduce" });
+      await page.goto("/");
+      await page.getByRole("button", { name: new RegExp(`Ver escena ${scene + 1}`) }).click();
+      const overflow = await page.evaluate(() => document.documentElement.scrollWidth - innerWidth);
+      expect(overflow).toBeLessThanOrEqual(0);
+      const results = await new AxeBuilder({ page }).include("#inicio").analyze();
+      expect(results.violations.filter(v => ["serious", "critical"].includes(v.impact)).map(v => v.id)).toEqual([]);
+    });
+  }
+});
+
+test.describe("hero video sound", () => {
+  test("videos start muted; the sound button and the hint turn sound on and off", async ({ page }) => {
+    await page.goto("/");
+    await page.getByRole("button", { name: /Ver escena 2/ }).click();
+    const hint = page.locator('#inicio .scene[data-scene="1"] .sound-hint');
+    await expect(hint).toBeVisible();
+    const sound = page.locator("#sceneSound");
+    await expect(sound).toHaveAttribute("aria-pressed", "false");
+    await hint.click();
+    await expect(sound).toHaveAttribute("aria-pressed", "true");
+    await expect(sound).toHaveAttribute("aria-label", "Silenciar");
+    await expect(hint).toBeHidden();
+    const v1 = page.locator('#inicio .scene[data-scene="1"] video');
+    expect(await v1.evaluate(v => v.muted)).toBe(false);
+    await page.getByRole("button", { name: /Ver escena 3/ }).click();
+    expect(await page.locator('#inicio .scene[data-scene="2"] video').evaluate(v => v.muted)).toBe(false);
+    await sound.click();
+    await expect(sound).toHaveAttribute("aria-pressed", "false");
+    expect(await page.$$eval("#inicio video", vs => vs.every(v => v.muted))).toBe(true);
+  });
+
+  test("hero clips and gallery videos carry an audio track", async ({ page }) => {
+    await page.goto("/");
+    await openService(page, "almanaques");
+    await page.locator("#galBody .gal-thumb").nth(1).click();
+    const v = page.locator("#galMedia video");
+    await expect(v).toHaveAttribute("controls", "");
+    expect(await v.evaluate(el => el.muted)).toBe(false);
+  });
+});
+
+test.describe("service carousel", () => {
+  const active = page => page.locator(".svc-card.on");
+  const activeColor = page => page.$$eval(".svc-color", els => els.findIndex(e => e.classList.contains("on")));
+
+  test("arrows, keys and dots move the deck, the stage colour and the current dot", async ({ page }) => {
+    await page.goto("/");
+    const stage = page.locator(".svc-stage");
+    await stage.scrollIntoViewIfNeeded();
+    await expect(active(page)).toHaveAttribute("data-gal", "almanaques");
+    await expect(page.locator(".svc-card[inert]")).toHaveCount(5);
+    await page.getByRole("button", { name: "Servicio siguiente" }).click();
+    await expect(active(page)).toHaveAttribute("data-gal", "bolsas-kraft");
+    expect(await activeColor(page)).toBe(1);
+    await expect(page.getByRole("button", { name: "Ver Bolsas kraft", exact: true })).toHaveAttribute("aria-current", "true");
+    await page.keyboard.press("ArrowRight");
+    await expect(active(page)).toHaveAttribute("data-gal", "cajas-con-tu-logo");
+    await page.keyboard.press("ArrowLeft");
+    await expect(active(page)).toHaveAttribute("data-gal", "bolsas-kraft");
+    await page.getByRole("button", { name: "Ver Cuadros de promoción", exact: true }).click();
+    await expect(active(page)).toHaveAttribute("data-gal", "cuadros-de-promocion");
+    expect(await activeColor(page)).toBe(6);
+    await page.getByRole("button", { name: "Servicio siguiente" }).click();
+    await expect(active(page)).toHaveAttribute("data-gal", "diseno-grafico");
+    await page.getByRole("button", { name: "Servicio siguiente" }).click();
+    await expect(active(page)).toHaveAttribute("data-gal", "almanaques");
+    await page.getByRole("button", { name: "Servicio anterior" }).click();
+    await expect(active(page)).toHaveAttribute("data-gal", "diseno-grafico");
+  });
+
+  test("plays on its own once visible", async ({ page }) => {
+    await page.goto("/");
+    await page.locator(".svc-stage").scrollIntoViewIfNeeded();
+    await page.mouse.move(1, 1);
+    await expect(active(page)).toHaveAttribute("data-gal", "almanaques");
+    await expect(active(page)).toHaveAttribute("data-gal", "bolsas-kraft", { timeout: 6000 });
+  });
+
+  test("does not play on its own with reduced motion", async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await page.goto("/");
+    await page.locator(".svc-stage").scrollIntoViewIfNeeded();
+    await page.mouse.move(1, 1);
+    await page.waitForTimeout(4500);
+    await expect(active(page)).toHaveAttribute("data-gal", "almanaques");
+  });
+
+  test("swipes on touch screens without opening a gallery", async ({ page }) => {
+    await page.setViewportSize(MOBILE);
+    await page.goto("/");
+    const track = page.locator(".svc-track");
+    await track.scrollIntoViewIfNeeded();
+    const swipe = async (from, to) => {
+      await page.locator(".svc-card.on").dispatchEvent("pointerdown", { pointerType: "touch", clientX: from, bubbles: true });
+      await page.locator(".svc-card.on").dispatchEvent("pointerup", { pointerType: "touch", clientX: to, bubbles: true });
+      await page.locator(".svc-card.on").dispatchEvent("click", { bubbles: true });
+    };
+    await swipe(300, 120);
+    await expect(active(page)).toHaveAttribute("data-gal", "bolsas-kraft");
+    await expect(page.locator("#gal")).toBeHidden();
+    await swipe(80, 300);
+    await expect(active(page)).toHaveAttribute("data-gal", "almanaques");
+    await expect(page.locator("#gal")).toBeHidden();
+  });
+
+  for (const viewport of [MOBILE, { width: 1440, height: 900 }]) {
+    test(`has no serious axe violations at ${viewport.width}px`, async ({ page }) => {
+      await page.setViewportSize(viewport);
+      await page.emulateMedia({ reducedMotion: "reduce" });
+      await page.goto("/");
+      await scrollAll(page);
+      await page.locator(".svc-stage").scrollIntoViewIfNeeded();
+      const results = await new AxeBuilder({ page }).include(".svc-stage").analyze();
+      expect(results.violations.filter(v => ["serious", "critical"].includes(v.impact)).map(v => v.id)).toEqual([]);
+    });
+  }
+});
