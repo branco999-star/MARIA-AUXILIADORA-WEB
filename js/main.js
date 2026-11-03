@@ -35,10 +35,12 @@
   var scenes = Array.prototype.slice.call(hero.querySelectorAll('.scene'));
   var dots = Array.prototype.slice.call(hero.querySelectorAll('.scene-dot'));
   var pauseBtn = document.getElementById('scenePause');
-  var SCENE_MS = 7000;
+  var SCENE_MS = 15000;
   var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var sceneIdx = 0, sceneTimer = null, sceneStart = 0, sceneLeft = SCENE_MS;
-  var userPaused = reduceMotion, held = false;
+  var userPaused = reduceMotion, held = false, soundOn = false;
+  var soundBtn = document.getElementById('sceneSound');
+  var heroVideos = Array.prototype.slice.call(hero.querySelectorAll('video'));
 
   hero.style.setProperty('--scene-ms', SCENE_MS + 'ms');
   if (reduceMotion){
@@ -51,6 +53,8 @@
     var v = scene.querySelector('video');
     if (!v || reduceMotion) return;
     if (!v.getAttribute('src')) v.setAttribute('src', v.dataset.src);
+    v.muted = !soundOn;
+    v.currentTime = 0;
     var p = v.play();
     if (p && p.catch) p.catch(function(){ /* autoplay blocked: poster stays visible */ });
   }
@@ -101,6 +105,26 @@
     if (on){ stopTimer(); sceneLeft = Math.max(800, sceneLeft - (Date.now() - sceneStart)); }
     else startTimer(sceneLeft);
   }
+
+  // Browsers only autoplay muted video, so sound is an explicit opt-in that lasts for the visit
+  function setSound(on){
+    soundOn = on;
+    hero.classList.toggle('has-sound', on);
+    soundBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    soundBtn.setAttribute('aria-label', on ? 'Silenciar' : 'Activar sonido');
+    heroVideos.forEach(function(v){ v.muted = !on; });
+    var v = scenes[sceneIdx].querySelector('video');
+    if (on && v){
+      if (!v.getAttribute('src')) v.setAttribute('src', v.dataset.src);
+      v.currentTime = 0;
+      var p = v.play(); if (p && p.catch) p.catch(function(){});
+      if (!userPaused && !held) startTimer(SCENE_MS);
+    }
+  }
+  soundBtn.addEventListener('click', function(){ setSound(!soundOn); });
+  hero.querySelectorAll('[data-sound]').forEach(function(b){
+    b.addEventListener('click', function(){ setSound(true); soundBtn.focus(); });
+  });
 
   pauseBtn.addEventListener('click', function(){ setPaused(!userPaused); });
   hero.querySelectorAll('[data-goto]').forEach(function(b){
@@ -296,7 +320,7 @@
     var it = items[galIdx];
     galMedia.textContent = '';
     var m = it.type === 'video'
-      ? el('video', { src: it.src, poster: it.poster, controls: '', playsinline: '', muted: '', preload: 'metadata', width: it.w, height: it.h, 'aria-label': it.alt })
+      ? el('video', { src: it.src, poster: it.poster, controls: '', playsinline: '', preload: 'metadata', width: it.w, height: it.h, 'aria-label': it.alt })
       : el('img', { src: it.src, alt: it.alt, width: it.w, height: it.h });
     galMedia.appendChild(m);
     galCaption.textContent = it.alt + ' · ' + (galIdx + 1) + ' de ' + items.length;

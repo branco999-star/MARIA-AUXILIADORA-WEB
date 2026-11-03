@@ -55,8 +55,10 @@ Web de una sola página para la Imprenta, Librería y Bazar "María Auxiliadora"
 - [x] Consola sin errores y sin recursos 404
 
 ### Campaña Almanaques 2027 (portada)
-- [x] La portada cambia sola entre 4 escenas (fachada → 3 vídeos de almanaques), cada vez con más presencia de la campaña
-- [x] Los vídeos se ven en una tarjeta vertical tipo móvil, silenciados, y solo se descargan cuando les toca
+- [x] La portada cambia sola cada 15 segundos entre 4 escenas (fachada → 3 vídeos de almanaques), cada vez con más presencia de la campaña
+- [x] Los vídeos se ven en una tarjeta vertical tipo móvil y solo se descargan cuando les toca
+- [x] Los vídeos tienen sonido: empiezan silenciados (los navegadores no permiten reproducir sonido automáticamente) y el botón de altavoz o la burbuja «Toca para escuchar» lo activan para toda la visita
+- [x] Los vídeos de las galerías también tienen sonido (salvo el de Bolsas kraft, que no tiene audio en el original)
 - [x] Botones de WhatsApp de la campaña con el mensaje "Hola, quiero cotizar almanaques 2027 para mi negocio."
 - [x] Barras de progreso para saltar de escena y botón de pausa; se detiene al pasar el ratón o con el foco
 - [x] Con "movimiento reducido" activado no hay cambio automático ni vídeo automático

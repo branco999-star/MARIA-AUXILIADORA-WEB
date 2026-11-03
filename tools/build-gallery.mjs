@@ -1,7 +1,7 @@
 // Usage: FFMPEG=<path to ffmpeg.exe> node tools/build-gallery.mjs
 // Needs the local server running (npm run serve) to render PDF pages with pdf.js in Chromium.
 // Reads the original material folders (never modified) and writes web-ready copies to assets/galeria/:
-//   photos -> WebP (no metadata), videos -> 480px H.264 without audio + WebP poster,
+//   photos -> WebP (no metadata), videos -> 480px H.264 + AAC audio + WebP poster,
 //   PDF catalogs -> one WebP per page. Also writes assets/galeria/galeria.json for the site.
 import { execFileSync } from "node:child_process";
 import { mkdirSync, readdirSync, rmSync, writeFileSync, statSync } from "node:fs";
@@ -66,7 +66,7 @@ for (const cat of CATEGORIES) {
     const base = `${dir}/video-${pad(++nVideo)}`;
     const src = path.join(cat.folder, f);
     ff(["-i", src, "-map_metadata", "-1", "-vf", "scale='min(480,iw)':-2,fps=24", "-c:v", "libx264", "-preset", "slow", "-crf", "31",
-      "-profile:v", "main", "-pix_fmt", "yuv420p", "-an", "-movflags", "+faststart", `${base}.mp4`]);
+      "-profile:v", "main", "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "96k", "-ac", "2", "-movflags", "+faststart", `${base}.mp4`]);
     ff(["-ss", "1", "-i", `${base}.mp4`, "-frames:v", "1", "-c:v", "libwebp", "-quality", "75", `${base}.webp`]);
     ff(["-i", `${base}.webp`, "-vf", "scale=360:-2", "-c:v", "libwebp", "-quality", "70", `${base}-mini.webp`]);
     const { w, h } = probeSize(`${base}.mp4`);

@@ -470,7 +470,7 @@ test.describe("hero almanac campaign scenes", () => {
     await page.goto("/");
     const hero = page.locator("#inicio");
     await page.mouse.move(5, 5);
-    await page.clock.runFor(7100);
+    await page.clock.runFor(15100);
     await expect(hero).toHaveAttribute("data-scene", "1");
     await page.locator("#scenePause").click();
     await expect(page.locator("#scenePause")).toHaveAttribute("aria-pressed", "true");
@@ -480,7 +480,7 @@ test.describe("hero almanac campaign scenes", () => {
     await page.locator("#scenePause").click();
     await page.mouse.move(5, 5);
     await page.locator("#scenePause").blur();
-    await page.clock.runFor(7100);
+    await page.clock.runFor(15100);
     await expect(hero).toHaveAttribute("data-scene", "2");
   });
 
@@ -516,4 +516,35 @@ test.describe("hero almanac campaign scenes", () => {
       expect(results.violations.filter(v => ["serious", "critical"].includes(v.impact)).map(v => v.id)).toEqual([]);
     });
   }
+});
+
+test.describe("hero video sound", () => {
+  test("videos start muted; the sound button and the hint turn sound on and off", async ({ page }) => {
+    await page.goto("/");
+    await page.getByRole("button", { name: /Ver escena 2/ }).click();
+    const hint = page.locator('#inicio .scene[data-scene="1"] .sound-hint');
+    await expect(hint).toBeVisible();
+    const sound = page.locator("#sceneSound");
+    await expect(sound).toHaveAttribute("aria-pressed", "false");
+    await hint.click();
+    await expect(sound).toHaveAttribute("aria-pressed", "true");
+    await expect(sound).toHaveAttribute("aria-label", "Silenciar");
+    await expect(hint).toBeHidden();
+    const v1 = page.locator('#inicio .scene[data-scene="1"] video');
+    expect(await v1.evaluate(v => v.muted)).toBe(false);
+    await page.getByRole("button", { name: /Ver escena 3/ }).click();
+    expect(await page.locator('#inicio .scene[data-scene="2"] video').evaluate(v => v.muted)).toBe(false);
+    await sound.click();
+    await expect(sound).toHaveAttribute("aria-pressed", "false");
+    expect(await page.$$eval("#inicio video", vs => vs.every(v => v.muted))).toBe(true);
+  });
+
+  test("hero clips and gallery videos carry an audio track", async ({ page }) => {
+    await page.goto("/");
+    await page.locator('.chip-gal[data-gal="almanaques"]').click();
+    await page.locator("#galBody .gal-thumb").nth(1).click();
+    const v = page.locator("#galMedia video");
+    await expect(v).toHaveAttribute("controls", "");
+    expect(await v.evaluate(el => el.muted)).toBe(false);
+  });
 });
