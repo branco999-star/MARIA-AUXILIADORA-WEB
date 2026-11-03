@@ -195,7 +195,7 @@ test("images have alt, size attributes, WebP and lazy loading below the fold", a
   const imgs = await page.$$eval("main img, nav img, footer img", els => els.map(i => ({
     src: i.getAttribute("src"), alt: i.getAttribute("alt"), w: i.getAttribute("width"), h: i.getAttribute("height"), lazy: i.getAttribute("loading"),
   })));
-  expect(imgs.length).toBe(48);
+  expect(imgs.length).toBe(49);
   for (const i of imgs) {
     expect(i.alt, i.src).not.toBeNull();
     expect(i.w && i.h, i.src).toBeTruthy();
@@ -320,7 +320,7 @@ async function openService(page, id) {
 }
 
 test.describe("category galleries", () => {
-  const CATS = ["almanaques", "bolsas-kraft", "cajas-con-tu-logo", "cirios-velas-y-velones", "llaveros-y-souvenirs", "recuerdos-para-eventos", "cuadros-de-promocion"];
+  const CATS = ["almanaques", "bolsas-kraft", "cajas-con-tu-logo", "cirios-velas-y-velones", "llaveros-y-souvenirs", "recuerdos-para-eventos", "cuadros-de-promocion", "diseno-grafico"];
 
   test("the service carousel has one gallery card per material folder, and no separate gallery section", async ({ page }) => {
     await page.goto("/");
@@ -329,7 +329,7 @@ test.describe("category galleries", () => {
     await expect(page.locator("#trabajos")).toHaveCount(0);
     await expect(page.locator('a[href="#trabajos"]')).toHaveCount(0);
     const staticChips = await page.$$eval(".chips .chip", els => els.map(e => e.tagName));
-    expect(staticChips.length).toBe(21);
+    expect(staticChips.length).toBe(20);
     expect(new Set(staticChips)).toEqual(new Set(["DIV"]));
   });
 
@@ -390,7 +390,7 @@ test.describe("category galleries", () => {
     page.on("request", r => { if (r.url().includes("/assets/galeria/")) requested.push(new URL(r.url()).pathname.slice(1)); });
     await page.goto("/", { waitUntil: "networkidle" });
     const covers = await page.$$eval(".svc-card img", imgs => imgs.map(i => i.getAttribute("src")));
-    expect(covers).toHaveLength(7);
+    expect(covers).toHaveLength(8);
     expect(covers.every(c => /-mini\.webp$/.test(c))).toBe(true);
     expect(requested.filter(u => !covers.includes(u))).toEqual([]);
   });
@@ -595,7 +595,7 @@ test.describe("service carousel", () => {
     const stage = page.locator(".svc-stage");
     await stage.scrollIntoViewIfNeeded();
     await expect(active(page)).toHaveAttribute("data-gal", "almanaques");
-    await expect(page.locator(".svc-card[inert]")).toHaveCount(4);
+    await expect(page.locator(".svc-card[inert]")).toHaveCount(5);
     await page.getByRole("button", { name: "Servicio siguiente" }).click();
     await expect(active(page)).toHaveAttribute("data-gal", "bolsas-kraft");
     expect(await activeColor(page)).toBe(1);
@@ -608,9 +608,11 @@ test.describe("service carousel", () => {
     await expect(active(page)).toHaveAttribute("data-gal", "cuadros-de-promocion");
     expect(await activeColor(page)).toBe(6);
     await page.getByRole("button", { name: "Servicio siguiente" }).click();
+    await expect(active(page)).toHaveAttribute("data-gal", "diseno-grafico");
+    await page.getByRole("button", { name: "Servicio siguiente" }).click();
     await expect(active(page)).toHaveAttribute("data-gal", "almanaques");
     await page.getByRole("button", { name: "Servicio anterior" }).click();
-    await expect(active(page)).toHaveAttribute("data-gal", "cuadros-de-promocion");
+    await expect(active(page)).toHaveAttribute("data-gal", "diseno-grafico");
   });
 
   test("plays on its own once visible", async ({ page }) => {
