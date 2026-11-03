@@ -321,6 +321,9 @@ test.describe("category galleries", () => {
     const staticChips = await page.$$eval(".chips .chip:not(.chip-gal)", els => els.map(e => e.tagName));
     expect(staticChips.length).toBe(21);
     expect(new Set(staticChips)).toEqual(new Set(["DIV"]));
+    await page.setViewportSize({ width: 1440, height: 900 });
+    const [galW, chipW] = await page.evaluate(() => [".chip-gal", ".chip:not(.chip-gal)"].map(s => Math.round(document.querySelector(s).getBoundingClientRect().width)));
+    expect(galW).toBe(chipW);
   });
 
   test("every gallery file listed in galeria.json exists", async ({ page }) => {
