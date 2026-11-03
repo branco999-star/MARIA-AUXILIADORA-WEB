@@ -310,7 +310,7 @@ test("Google Maps links and embedded map point to the store", async ({ page }) =
 });
 
 test.describe("category galleries", () => {
-  const CATS = ["almanaques", "bolsas-kraft", "cajas-con-tu-logo", "cirios-velas-y-velones", "llaveros-y-souvenirs", "recuerdos-para-eventos", "cuadros-de-promocion"];
+  const CATS = ["almanaques", "bolsas-kraft", "cajas-con-tu-logo", "cirios-velas-y-velones", "llaveros-y-souvenirs", "recuerdos-para-eventos", "cuadros-de-promocion", "diseno-grafico"];
 
   test("the service list has one gallery button per material folder, and no separate gallery section", async ({ page }) => {
     await page.goto("/");
@@ -319,7 +319,7 @@ test.describe("category galleries", () => {
     await expect(page.locator("#trabajos")).toHaveCount(0);
     await expect(page.locator('a[href="#trabajos"]')).toHaveCount(0);
     const staticChips = await page.$$eval(".chips .chip:not(.chip-gal)", els => els.map(e => e.tagName));
-    expect(staticChips.length).toBe(21);
+    expect(staticChips.length).toBe(20);
     expect(new Set(staticChips)).toEqual(new Set(["DIV"]));
     await page.setViewportSize({ width: 1440, height: 900 });
     const [galW, chipW] = await page.evaluate(() => [".chip-gal", ".chip:not(.chip-gal)"].map(s => Math.round(document.querySelector(s).getBoundingClientRect().width)));
