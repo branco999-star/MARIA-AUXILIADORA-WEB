@@ -299,13 +299,14 @@ test("footer legal line uses the full width", async ({ page }) => {
   expect(lines).toBe(1);
 });
 
-test("Google Maps links point to the store location", async ({ page }) => {
+test("Google Maps links and embedded map point to the store", async ({ page }) => {
   await page.goto("/");
-  const hrefs = await page.$$eval('a[href*="google.com/maps"]', as => as.map(a => a.href));
-  expect(hrefs.length).toBe(2);
-  for (const h of hrefs) {
-    expect(decodeURIComponent(new URL(h).searchParams.get("query"))).toBe("Prol. 28 de Julio, Lurigancho-Chosica 15468, Perú");
-  }
+  const hrefs = await page.$$eval('a[href*="maps.app.goo.gl"]', as => as.map(a => a.href));
+  expect(hrefs).toEqual(["https://maps.app.goo.gl/oevsQRWjF39uYiZ79", "https://maps.app.goo.gl/oevsQRWjF39uYiZ79"]);
+  const map = page.locator(".mapa-embed iframe");
+  await expect(map).toHaveAttribute("loading", "lazy");
+  await expect(map).toHaveAttribute("title", /Imprenta María Auxiliadora/);
+  expect(decodeURIComponent(await map.getAttribute("src"))).toContain("Imprenta+\"Maria+Auxiliadora\",+Prol.+28+de+Julio,+Lurigancho-Chosica+15468");
 });
 
 test.describe("category galleries", () => {
