@@ -320,7 +320,7 @@ async function openService(page, id) {
 }
 
 test.describe("category galleries", () => {
-  const CATS = ["almanaques", "bolsas-kraft", "cajas-con-tu-logo", "cirios-velas-y-velones", "llaveros-y-souvenirs", "recuerdos-para-eventos", "cuadros-de-promocion", "diseno-grafico"];
+  const CATS = ["almanaques", "bolsas-kraft", "cajas-con-tu-logo", "cirios-velas-y-velones", "llaveros-y-souvenirs", "invitaciones", "cuadros-de-promocion", "diseno-grafico"];
 
   test("the service carousel has one gallery card per material folder, and no separate gallery section", async ({ page }) => {
     await page.goto("/");
@@ -329,7 +329,7 @@ test.describe("category galleries", () => {
     await expect(page.locator("#trabajos")).toHaveCount(0);
     await expect(page.locator('a[href="#trabajos"]')).toHaveCount(0);
     const staticChips = await page.$$eval(".chips .chip", els => els.map(e => e.tagName));
-    expect(staticChips.length).toBe(20);
+    expect(staticChips.length).toBe(19);
     expect(new Set(staticChips)).toEqual(new Set(["DIV"]));
   });
 
@@ -378,7 +378,7 @@ test.describe("category galleries", () => {
 
   test("catalog categories show one group per PDF", async ({ page }) => {
     await page.goto("/");
-    await openService(page, "recuerdos-para-eventos");
+    await openService(page, "invitaciones");
     await expect(page.locator("#galBody .gal-group h3")).toHaveCount(3);
     await expect(page.locator("#galBody .gal-thumb")).toHaveCount(128);
     await page.locator("#galBody .gal-thumb").nth(41).click();
