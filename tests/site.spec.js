@@ -89,7 +89,7 @@ test("all main sections exist", async ({ page }) => {
 
 test("WhatsApp calls to action point to the business number", async ({ page }) => {
   await page.goto("/");
-  const heroCta = page.locator(".hero a.btn-wa");
+  const heroCta = page.locator('.hero .scene[data-scene="0"] a.btn-wa');
   await expect(heroCta).toBeVisible();
   await expect(heroCta).toHaveAttribute("href", new RegExp(`wa\\.me/${WA_NUMBER}`));
   await expect(page.locator("a.fab")).toBeVisible();
@@ -195,7 +195,7 @@ test("images have alt, size attributes, WebP and lazy loading below the fold", a
   const imgs = await page.$$eval("main img, nav img, footer img", els => els.map(i => ({
     src: i.getAttribute("src"), alt: i.getAttribute("alt"), w: i.getAttribute("width"), h: i.getAttribute("height"), lazy: i.getAttribute("loading"),
   })));
-  expect(imgs.length).toBe(40);
+  expect(imgs.length).toBe(41);
   for (const i of imgs) {
     expect(i.alt, i.src).not.toBeNull();
     expect(i.w && i.h, i.src).toBeTruthy();
@@ -414,3 +414,106 @@ for (const width of [1024, 1199, 1200, 1280, 1440]) {
     expect(outside).toEqual([]);
   });
 }
+
+test.describe("hero almanac campaign scenes", () => {
+  const ALMANAC_WA = "wa.me/51999759353?text=Hola%2C%20quiero%20cotizar%20almanaques%202027%20para%20mi%20negocio.";
+
+  test("four scenes, only the first visible, still one h1", async ({ page }) => {
+    await page.goto("/");
+    await expect(page.locator("#inicio .scene")).toHaveCount(4);
+    await expect(page.locator("h1")).toHaveCount(1);
+    await expect(page.locator('#inicio .scene[data-scene="0"]')).toBeVisible();
+    for (const i of [1, 2, 3]) {
+      const s = page.locator(`#inicio .scene[data-scene="${i}"]`);
+      await expect(s).toHaveAttribute("aria-hidden", "true");
+      await expect(s).toHaveAttribute("inert", "");
+    }
+  });
+
+  test("hero videos are muted, inline, not preloaded, and nothing is downloaded at load", async ({ page }) => {
+    const videoRequests = [];
+    page.on("request", r => { if (r.url().includes("/assets/video/") && r.url().endsWith(".mp4")) videoRequests.push(r.url()); });
+    await page.goto("/", { waitUntil: "networkidle" });
+    const vids = await page.$$eval("#inicio video", vs => vs.map(v => ({ muted: v.muted, inline: v.hasAttribute("playsinline"), preload: v.getAttribute("preload"), src: v.getAttribute("src"), poster: v.getAttribute("poster") })));
+    expect(vids).toHaveLength(3);
+    for (const v of vids) {
+      expect(v.muted).toBe(true);
+      expect(v.inline).toBe(true);
+      expect(v.preload).toBe("none");
+      expect(v.src).toBeNull();
+      expect(v.poster).toMatch(/\.webp$/);
+    }
+    expect(videoRequests).toEqual([]);
+  });
+
+  test("progress bars jump to a scene; the last one shows the big almanac CTA", async ({ page }) => {
+    await page.goto("/");
+    await page.getByRole("button", { name: /Ver escena 4/ }).click();
+    const last = page.locator('#inicio .scene[data-scene="3"]');
+    await expect(last).toBeVisible();
+    await expect(last).not.toHaveAttribute("aria-hidden", "true");
+    const cta = last.getByRole("link", { name: /Cotizar almanaques por WhatsApp/ });
+    await expect(cta).toBeVisible();
+    await expect(cta).toHaveAttribute("href", "https://" + ALMANAC_WA);
+    await expect(page.locator("#inicio")).toHaveAttribute("data-scene", "3");
+    await expect(page.locator('#inicio .scene[data-scene="0"]')).toHaveAttribute("aria-hidden", "true");
+  });
+
+  test("teaser in the first scene opens the campaign", async ({ page }) => {
+    await page.goto("/");
+    await page.getByRole("button", { name: /Campaña Almanaques 2027/ }).click();
+    await expect(page.locator("#inicio")).toHaveAttribute("data-scene", "1");
+  });
+
+  test("scenes advance automatically and the pause button stops them", async ({ page }) => {
+    await page.clock.install();
+    await page.goto("/");
+    const hero = page.locator("#inicio");
+    await page.mouse.move(5, 5);
+    await page.clock.runFor(7100);
+    await expect(hero).toHaveAttribute("data-scene", "1");
+    await page.locator("#scenePause").click();
+    await expect(page.locator("#scenePause")).toHaveAttribute("aria-pressed", "true");
+    await page.mouse.move(5, 5);
+    await page.clock.runFor(20000);
+    await expect(hero).toHaveAttribute("data-scene", "1");
+    await page.locator("#scenePause").click();
+    await page.mouse.move(5, 5);
+    await page.locator("#scenePause").blur();
+    await page.clock.runFor(7100);
+    await expect(hero).toHaveAttribute("data-scene", "2");
+  });
+
+  test("with reduced motion there is no automatic advance", async ({ browser }) => {
+    const context = await browser.newContext({ reducedMotion: "reduce" });
+    const page = await context.newPage();
+    await page.clock.install();
+    await page.goto("/");
+    await page.clock.runFor(30000);
+    await expect(page.locator("#inicio")).toHaveAttribute("data-scene", "0");
+    await expect(page.locator("#scenePause")).toHaveAttribute("aria-pressed", "true");
+    await context.close();
+  });
+
+  test("'Ver modelos' opens the almanac gallery with the new video", async ({ page }) => {
+    await page.goto("/");
+    await page.getByRole("button", { name: /Ver escena 2/ }).click();
+    await page.locator('#inicio .scene[data-scene="1"] [data-gal="almanaques"]').click();
+    await expect(page.locator("#galTitle")).toHaveText("Almanaques");
+    await expect(page.locator("#galBody .gal-play")).toHaveCount(3);
+    await expect(page.locator('.chip-gal[data-gal="almanaques"] small')).toHaveText("1 foto · 3 vídeos");
+  });
+
+  for (const scene of [1, 2, 3]) {
+    test(`scene ${scene + 1} has no serious axe violations and no horizontal scroll on mobile`, async ({ page }) => {
+      await page.setViewportSize({ width: 375, height: 800 });
+      await page.emulateMedia({ reducedMotion: "reduce" });
+      await page.goto("/");
+      await page.getByRole("button", { name: new RegExp(`Ver escena ${scene + 1}`) }).click();
+      const overflow = await page.evaluate(() => document.documentElement.scrollWidth - innerWidth);
+      expect(overflow).toBeLessThanOrEqual(0);
+      const results = await new AxeBuilder({ page }).include("#inicio").analyze();
+      expect(results.violations.filter(v => ["serious", "critical"].includes(v.impact)).map(v => v.id)).toEqual([]);
+    });
+  }
+});

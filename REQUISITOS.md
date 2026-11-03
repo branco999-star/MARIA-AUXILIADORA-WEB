@@ -54,6 +54,15 @@ Web de una sola página para la Imprenta, Librería y Bazar "María Auxiliadora"
 - [x] Página inicial de menos de 1,5 MB
 - [x] Consola sin errores y sin recursos 404
 
+### Campaña Almanaques 2027 (portada)
+- [x] La portada cambia sola entre 4 escenas (fachada → 3 vídeos de almanaques), cada vez con más presencia de la campaña
+- [x] Los vídeos se ven en una tarjeta vertical tipo móvil, silenciados, y solo se descargan cuando les toca
+- [x] Botones de WhatsApp de la campaña con el mensaje "Hola, quiero cotizar almanaques 2027 para mi negocio."
+- [x] Barras de progreso para saltar de escena y botón de pausa; se detiene al pasar el ratón o con el foco
+- [x] Con "movimiento reducido" activado no hay cambio automático ni vídeo automático
+- [x] "Ver modelos" abre la galería de Almanaques (ahora con 3 vídeos)
+- [x] Para regenerar los clips de la portada: `FFMPEG=<ruta a ffmpeg.exe> node tools/build-hero-clips.mjs`
+
 ## Supuestos
 - Se mantiene la paleta completa de la web anterior (incluye rosa, morado, verde y naranja además de los colores de marca), porque esa web es la base. Solo se oscurecen los colores que no cumplan el contraste AA.
 - Los textos se toman tal cual de la web anterior; se consideran ya revisados.

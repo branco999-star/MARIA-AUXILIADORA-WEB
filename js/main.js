@@ -30,6 +30,90 @@
     if (!saved) applyTheme(e.matches ? 'dark' : 'light');
   });
 
+  /* Portada por escenas (campaña de almanaques) */
+  var hero = document.getElementById('inicio');
+  var scenes = Array.prototype.slice.call(hero.querySelectorAll('.scene'));
+  var dots = Array.prototype.slice.call(hero.querySelectorAll('.scene-dot'));
+  var pauseBtn = document.getElementById('scenePause');
+  var SCENE_MS = 7000;
+  var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var sceneIdx = 0, sceneTimer = null, sceneStart = 0, sceneLeft = SCENE_MS;
+  var userPaused = reduceMotion, held = false;
+
+  hero.style.setProperty('--scene-ms', SCENE_MS + 'ms');
+  if (reduceMotion){
+    hero.classList.add('is-static', 'is-paused');
+    pauseBtn.setAttribute('aria-pressed', 'true');
+    pauseBtn.setAttribute('aria-label', 'Reanudar portada');
+  }
+
+  function playSceneVideo(scene){
+    var v = scene.querySelector('video');
+    if (!v || reduceMotion) return;
+    if (!v.getAttribute('src')) v.setAttribute('src', v.dataset.src);
+    var p = v.play();
+    if (p && p.catch) p.catch(function(){ /* autoplay blocked: poster stays visible */ });
+  }
+  function stopTimer(){ clearTimeout(sceneTimer); sceneTimer = null; }
+  function startTimer(ms){
+    stopTimer();
+    if (userPaused || held) return;
+    sceneLeft = ms;
+    sceneStart = Date.now();
+    sceneTimer = setTimeout(function(){ goTo(sceneIdx + 1); }, ms);
+  }
+  function goTo(i){
+    sceneIdx = (i + scenes.length) % scenes.length;
+    scenes.forEach(function(s, k){
+      var on = k === sceneIdx;
+      s.classList.toggle('is-on', on);
+      if (on){ s.removeAttribute('aria-hidden'); s.removeAttribute('inert'); }
+      else {
+        s.setAttribute('aria-hidden', 'true'); s.setAttribute('inert', '');
+        var v = s.querySelector('video'); if (v) v.pause();
+      }
+    });
+    dots.forEach(function(d, k){
+      // Restart the progress animation on the active bar
+      d.classList.remove('is-on');
+      d.classList.toggle('is-done', k < sceneIdx);
+      if (k === sceneIdx){ void d.offsetWidth; d.classList.add('is-on'); d.setAttribute('aria-current', 'true'); }
+      else d.removeAttribute('aria-current');
+    });
+    hero.dataset.scene = sceneIdx;
+    playSceneVideo(scenes[sceneIdx]);
+    startTimer(SCENE_MS);
+  }
+  function setPaused(p){
+    userPaused = p;
+    hero.classList.toggle('is-paused', p);
+    pauseBtn.setAttribute('aria-pressed', p ? 'true' : 'false');
+    pauseBtn.setAttribute('aria-label', p ? 'Reanudar portada' : 'Pausar portada');
+    var v = scenes[sceneIdx].querySelector('video');
+    if (p){ stopTimer(); if (v) v.pause(); }
+    else { hero.classList.remove('is-static'); playSceneVideo(scenes[sceneIdx]); startTimer(SCENE_MS); }
+  }
+  // Hold while the visitor is pointing at or focused inside the hero
+  function hold(on){
+    if (held === on || userPaused) { held = on; return; }
+    held = on;
+    hero.classList.toggle('is-hold', on);
+    if (on){ stopTimer(); sceneLeft = Math.max(800, sceneLeft - (Date.now() - sceneStart)); }
+    else startTimer(sceneLeft);
+  }
+
+  pauseBtn.addEventListener('click', function(){ setPaused(!userPaused); });
+  hero.querySelectorAll('[data-goto]').forEach(function(b){
+    b.addEventListener('click', function(){ goTo(+b.dataset.goto); });
+  });
+  var heroGrid = hero.querySelector('.hero-grid');
+  heroGrid.addEventListener('mouseenter', function(){ hold(true); });
+  heroGrid.addEventListener('mouseleave', function(){ hold(false); });
+  heroGrid.addEventListener('focusin', function(){ hold(true); });
+  heroGrid.addEventListener('focusout', function(e){ if (!heroGrid.contains(e.relatedTarget)) hold(false); });
+  document.addEventListener('visibilitychange', function(){ hold(document.hidden); });
+  if (!reduceMotion) startTimer(SCENE_MS);
+
   /* Nav scroll */
   var nav = document.getElementById('nav');
   var onScroll = function(){ nav.classList.toggle('scrolled', window.scrollY > 12); };
@@ -230,7 +314,7 @@
     if (galThumb) galThumb.focus();
   }
 
-  document.querySelectorAll('.chip-gal').forEach(function(b){
+  document.querySelectorAll('[data-gal]').forEach(function(b){
     b.addEventListener('click', function(){ openGaleria(b.dataset.gal, b); });
   });
   document.getElementById('galClose').addEventListener('click', closeGaleria);
