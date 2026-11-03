@@ -315,25 +315,42 @@ section{padding:88px 0}
 .svc-arrow:hover{transform:scale(1.08)}
 .svc-arrow:active{transform:scale(.92)}
 .svc-arrow:focus-visible,.svc-dot:focus-visible{outline:3px solid #fff;outline-offset:2px}
-.svc-dots{display:flex}
-.svc-dot{position:relative;width:34px;height:44px;padding:0;border:0;border-radius:var(--r-sm);background:none;cursor:pointer}
-.svc-dot::before{
-  content:'';position:absolute;left:50%;top:50%;width:10px;height:10px;margin:-5px 0 0 -5px;border-radius:5px;
-  background:#fff;opacity:.5;transition:transform .35s var(--ease-spring), opacity .35s ease;
+/* Named service pills: see every service at a glance and jump straight to it */
+.svc-tabs{
+  position:relative;z-index:20;display:flex;flex-wrap:wrap;justify-content:center;gap:8px;
+  max-width:860px;margin:-20px auto 26px;padding:4px 20px;
 }
-.svc-dot:hover::before{opacity:.8}
-.svc-dot:active::before{transform:scale(.8)}
-.svc-dot[aria-current="true"]::before{opacity:1;transform:scaleX(2.2)}
+.svc-dot{
+  position:relative;isolation:isolate;min-height:44px;padding:0 16px;border:0;border-radius:999px;
+  font:inherit;font-size:.9rem;font-weight:700;white-space:nowrap;color:#111633;cursor:pointer;
+  background:rgba(255,255,255,.88);box-shadow:0 2px 8px rgba(10,31,110,.14);
+  transition:transform .25s var(--ease-spring);
+}
+.svc-dot::before{
+  content:'';position:absolute;inset:0;z-index:-1;border-radius:inherit;background:#111633;
+  opacity:0;transition:opacity .3s ease;
+}
+.svc-dot:hover{transform:translateY(-2px)}
+.svc-dot:active{transform:scale(.95)}
+.svc-dot[aria-current="true"]{color:#fff}
+.svc-dot[aria-current="true"]::before{opacity:1}
 @media (max-width:640px){
   .svc-stage{padding-top:30px;margin-left:-6px;margin-right:-6px}
+  .svc-tabs{
+    flex-wrap:nowrap;justify-content:flex-start;margin:-14px 0 20px;padding:4px 16px 8px;
+    overflow-x:auto;scroll-snap-type:x proximity;scrollbar-width:none;
+  }
+  .svc-tabs::-webkit-scrollbar{display:none}
+  .svc-dot{flex:none;scroll-snap-align:center}
   .svc-track{height:350px}
   .svc-card{width:80%;transform:translateX(calc(var(--off) * 84%)) scale(calc(1 - var(--abs) * .18)) rotateY(calc(var(--off) * -16deg))}
   .svc-txt b{font-size:1.2rem}
-  .svc-dot{width:28px}
 }
 @media (prefers-reduced-motion:reduce){
   .svc-card{transform:translateX(calc(var(--off) * 74%)) scale(calc(1 - var(--abs) * .18));transition:opacity .3s ease}
   .svc-card.on .svc-card-in,.svc-card.on .svc-img img,.svc-cloud{animation:none}
+  .svc-dot,.svc-dot::before{transition:none}
+  .svc-dot:hover{transform:none}
 }
 
 /* Promos gallery */
