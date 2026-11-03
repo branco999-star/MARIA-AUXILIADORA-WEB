@@ -20,6 +20,7 @@ const CATEGORIES = [
   { id: "llaveros-y-souvenirs", title: "Llaveros y souvenirs", folder: "Llaveros y souvenirs" },
   { id: "recuerdos-para-eventos", title: "Recuerdos para eventos", folder: "Recuerdos para eventos" },
   { id: "cuadros-de-promocion", title: "Cuadros de promoción", folder: "cuadros de promocion" },
+  { id: "diseno-grafico", title: "Diseño gráfico", folder: "diseño grafico" },
 ];
 
 // Human names for the PDF catalogs, keyed by a fragment of the file name
