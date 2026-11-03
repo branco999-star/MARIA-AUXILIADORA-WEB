@@ -38,7 +38,7 @@ Web de una sola página para la Imprenta, Librería y Bazar "María Auxiliadora"
 - [x] El formulario exige el nombre y no guarda datos
 - [x] Modo oscuro: sigue la configuración del sistema y tiene un botón sol/luna en el menú que recuerda la elección
 - [x] El modo oscuro cumple contraste AA y no altera las fotos de productos
-- [x] Sección "Nuestros trabajos": un botón por cada carpeta de material que abre su galería (fotos, vídeos y páginas de catálogos), usable con teclado
+- [x] En «Todo lo que hacemos», los servicios con material (marcados con «Ver …») abren su galería de fotos, vídeos y catálogos, usable con teclado
 - [x] La galería no descarga nada hasta que se abre una categoría
 - [x] Para regenerar la galería tras cambiar las carpetas: `FFMPEG=<ruta a ffmpeg.exe> node tools/build-gallery.mjs` (con `npm run serve` en marcha)
 

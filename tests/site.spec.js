@@ -82,7 +82,7 @@ test("every internal link points to an existing section", async ({ page }) => {
 
 test("all main sections exist", async ({ page }) => {
   await page.goto("/");
-  for (const id of ["inicio", "servicios", "trabajos", "promociones", "productos", "cuadros", "pedir", "contacto"]) {
+  for (const id of ["inicio", "servicios", "promociones", "productos", "cuadros", "pedir", "contacto"]) {
     await expect(page.locator(`#${id}`)).toHaveCount(1);
   }
 });
@@ -312,10 +312,15 @@ test("Google Maps links and embedded map point to the store", async ({ page }) =
 test.describe("category galleries", () => {
   const CATS = ["almanaques", "bolsas-kraft", "cajas-con-tu-logo", "cirios-velas-y-velones", "llaveros-y-souvenirs", "recuerdos-para-eventos", "cuadros-de-promocion"];
 
-  test("there is one button per material folder", async ({ page }) => {
+  test("the service list has one gallery button per material folder, and no separate gallery section", async ({ page }) => {
     await page.goto("/");
-    const ids = await page.$$eval("#trabajos .cat", bs => bs.map(b => b.dataset.cat));
-    expect(ids).toEqual(CATS);
+    const ids = await page.$$eval(".servicios .chips .chip-gal", bs => bs.map(b => b.tagName + ":" + b.dataset.gal));
+    expect(ids).toEqual(CATS.map(c => "BUTTON:" + c));
+    await expect(page.locator("#trabajos")).toHaveCount(0);
+    await expect(page.locator('a[href="#trabajos"]')).toHaveCount(0);
+    const staticChips = await page.$$eval(".chips .chip:not(.chip-gal)", els => els.map(e => e.tagName));
+    expect(staticChips.length).toBe(21);
+    expect(new Set(staticChips)).toEqual(new Set(["DIV"]));
   });
 
   test("every gallery file listed in galeria.json exists", async ({ page }) => {
@@ -338,7 +343,7 @@ test.describe("category galleries", () => {
 
   test("opening a category shows its photos and videos, and the viewer works with the keyboard", async ({ page }) => {
     await page.goto("/");
-    const opener = page.locator('.cat[data-cat="bolsas-kraft"]');
+    const opener = page.locator('.chip-gal[data-gal="bolsas-kraft"]');
     await opener.click();
     const gal = page.locator("#gal");
     await expect(gal).toBeVisible();
@@ -364,7 +369,7 @@ test.describe("category galleries", () => {
 
   test("catalog categories show one group per PDF", async ({ page }) => {
     await page.goto("/");
-    await page.locator('.cat[data-cat="recuerdos-para-eventos"]').click();
+    await page.locator('.chip-gal[data-gal="recuerdos-para-eventos"]').click();
     await expect(page.locator("#galBody .gal-group h3")).toHaveCount(3);
     await expect(page.locator("#galBody .gal-thumb")).toHaveCount(128);
     await page.locator("#galBody .gal-thumb").nth(41).click();
@@ -383,7 +388,7 @@ test.describe("category galleries", () => {
       await page.setViewportSize(viewport);
       await page.emulateMedia({ reducedMotion: "reduce" });
       await page.goto("/");
-      await page.locator('.cat[data-cat="cajas-con-tu-logo"]').click();
+      await page.locator('.chip-gal[data-gal="cajas-con-tu-logo"]').click();
       await expect(page.locator("#galBody .gal-thumb")).toHaveCount(5);
       let results = await new AxeBuilder({ page }).include("#gal").analyze();
       let bad = results.violations.filter(v => ["serious", "critical"].includes(v.impact)).map(v => v.id);

@@ -189,7 +189,7 @@
   }
   function openGaleria(id, opener){
     galOpener = opener;
-    galTitle.textContent = opener.querySelector('b').textContent;
+    galTitle.textContent = opener.dataset.title;
     galWa.href = WA + encodeURIComponent('Hola, vi en la página web la galería de "' + galTitle.textContent + '" y quisiera cotizar.');
     galBody.textContent = 'Cargando…';
     gal.hidden = false;
@@ -230,8 +230,8 @@
     if (galThumb) galThumb.focus();
   }
 
-  document.querySelectorAll('.cat').forEach(function(b){
-    b.addEventListener('click', function(){ openGaleria(b.dataset.cat, b); });
+  document.querySelectorAll('.chip-gal').forEach(function(b){
+    b.addEventListener('click', function(){ openGaleria(b.dataset.gal, b); });
   });
   document.getElementById('galClose').addEventListener('click', closeGaleria);
   document.getElementById('gvClose').addEventListener('click', closeView);
