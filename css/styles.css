@@ -255,22 +255,86 @@ section{padding:88px 0}
 .chip:nth-child(6n+5) i{background:var(--morado)}
 .chip:nth-child(6n+6) i{background:var(--amarillo-osc)}
 .chip svg{width:20px;height:20px}
-/* Service chips that open a gallery of real work */
-.chip-gal{width:100%;text-align:left;font:inherit;font-weight:700;font-size:.97rem;color:inherit;position:relative}
-.chip-gal:active{transform:scale(.98)}
-/* Two sheets peeking out behind, like a stack of folders */
-.chip-gal::before,.chip-gal::after{
-  content:'';position:absolute;inset:-2px;border-radius:inherit;z-index:-1;
-  background:inherit;border:1px solid rgba(16,24,64,.09);box-shadow:0 2px 6px rgba(16,24,64,.05);
-  transition:transform .2s ease;
+/* Service carousel: 3D card deck on a stage whose colour follows the active card */
+.svc-stage{
+  position:relative;isolation:isolate;overflow:hidden;margin-bottom:34px;
+  border-radius:var(--r-xl);padding:44px 0 18px;
+  box-shadow:0 10px 30px rgba(10,31,110,.12), 0 30px 70px rgba(10,31,110,.14);
 }
-.chip-gal::before{transform:translate(5px,-5px)}
-.chip-gal::after{transform:translate(10px,-10px);opacity:.6}
-.chip-gal:hover::before{transform:translate(7px,-7px)}
-.chip-gal:hover::after{transform:translate(14px,-14px)}
-.chip-txt{display:flex;flex-direction:column;min-width:0;line-height:1.3}
-.chip-txt small{font-size:.78rem;font-weight:600;color:var(--gris);margin-top:3px}
-@media (prefers-reduced-motion:reduce){.chip-gal::before,.chip-gal::after{transition:none}}
+.svc-bg{position:absolute;inset:0;z-index:-1;background:var(--azul)}
+.svc-color{position:absolute;inset:0;background:var(--c);opacity:0;transition:opacity .6s ease}
+.svc-color.on{opacity:1}
+.svc-cloud{position:absolute;border-radius:50%;background:#fff;opacity:.2;animation:svcDrift 16s ease-in-out infinite alternate}
+.svc-cloud.c1{width:460px;height:460px;left:-160px;bottom:-300px}
+.svc-cloud.c2{width:560px;height:560px;right:-200px;bottom:-380px;animation-delay:-6s}
+.svc-cloud.c3{width:180px;height:180px;left:10%;top:-110px;opacity:.12;animation-delay:-11s}
+@keyframes svcDrift{to{transform:translate(40px,-18px)}}
+.svc-track{position:relative;height:380px;perspective:1200px;touch-action:pan-y}
+.svc-card{
+  --off:0;--abs:0;
+  position:absolute;inset:0;margin:0 auto;width:min(440px,78%);
+  padding:0;border:0;background:none;font:inherit;color:inherit;text-align:left;cursor:pointer;
+  perspective:900px;z-index:calc(10 - var(--abs));
+  transform:translateX(calc(var(--off) * 74%)) scale(calc(1 - var(--abs) * .18)) rotateY(calc(var(--off) * -16deg));
+  transition:transform .7s var(--ease-spring), opacity .45s ease;
+}
+.svc-card[inert]{opacity:0}
+.svc-card-in{
+  display:flex;flex-direction:column;height:100%;overflow:hidden;
+  padding:22px 22px 0;border-radius:var(--r-lg);background:#fff;color:var(--tinta);
+  box-shadow:0 6px 16px rgba(10,31,110,.14), 0 24px 50px rgba(10,31,110,.22);
+}
+.svc-card.on .svc-card-in{animation:svcSway 6s ease-in-out infinite}
+@keyframes svcSway{
+  0%,100%{transform:rotateX(0) rotateY(0)}
+  25%{transform:rotateX(2deg) rotateY(-3deg)}
+  75%{transform:rotateX(-2deg) rotateY(3deg)}
+}
+.svc-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.svc-txt{min-width:0;line-height:1.3}
+.svc-txt b{display:block;font-size:1.4rem;letter-spacing:-.02em}
+.svc-txt small{display:block;margin-top:4px;font-size:.85rem;font-weight:600;color:var(--gris)}
+.svc-go{
+  width:44px;height:44px;flex:none;display:grid;place-items:center;border-radius:50%;
+  background:var(--gris-cla);color:var(--tinta);transition:transform .3s var(--ease-spring);
+}
+.svc-card:hover .svc-go{transform:translateX(4px)}
+.svc-card:active .svc-go{transform:scale(.9)}
+.svc-card:focus-visible{outline:none}
+.svc-card:focus-visible .svc-card-in{outline:3px solid #fff;outline-offset:4px}
+.svc-img{flex:1;min-height:0;margin-top:18px;border-radius:var(--r-md) var(--r-md) 0 0;overflow:hidden;background:var(--gris-cla)}
+.svc-img img{width:100%;height:100%;object-fit:cover;object-position:center top;transform-origin:center top}
+.svc-card.on .svc-img img{animation:svcZoom 7s ease-in-out infinite alternate}
+@keyframes svcZoom{to{transform:scale(1.06)}}
+.svc-ctrl{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:18px}
+.svc-arrow{
+  width:44px;height:44px;flex:none;display:grid;place-items:center;border:0;border-radius:50%;
+  background:#fff;color:#111633;cursor:pointer;box-shadow:0 4px 12px rgba(10,31,110,.18);
+  transition:transform .2s var(--ease-spring);
+}
+.svc-arrow:hover{transform:scale(1.08)}
+.svc-arrow:active{transform:scale(.92)}
+.svc-arrow:focus-visible,.svc-dot:focus-visible{outline:3px solid #fff;outline-offset:2px}
+.svc-dots{display:flex}
+.svc-dot{position:relative;width:34px;height:44px;padding:0;border:0;border-radius:var(--r-sm);background:none;cursor:pointer}
+.svc-dot::before{
+  content:'';position:absolute;left:50%;top:50%;width:10px;height:10px;margin:-5px 0 0 -5px;border-radius:5px;
+  background:#fff;opacity:.5;transition:transform .35s var(--ease-spring), opacity .35s ease;
+}
+.svc-dot:hover::before{opacity:.8}
+.svc-dot:active::before{transform:scale(.8)}
+.svc-dot[aria-current="true"]::before{opacity:1;transform:scaleX(2.2)}
+@media (max-width:640px){
+  .svc-stage{padding-top:30px;margin-left:-6px;margin-right:-6px}
+  .svc-track{height:350px}
+  .svc-card{width:80%;transform:translateX(calc(var(--off) * 84%)) scale(calc(1 - var(--abs) * .18)) rotateY(calc(var(--off) * -16deg))}
+  .svc-txt b{font-size:1.2rem}
+  .svc-dot{width:28px}
+}
+@media (prefers-reduced-motion:reduce){
+  .svc-card{transform:translateX(calc(var(--off) * 74%)) scale(calc(1 - var(--abs) * .18));transition:opacity .3s ease}
+  .svc-card.on .svc-card-in,.svc-card.on .svc-img img,.svc-cloud{animation:none}
+}
 
 /* Promos gallery */
 .promos{background:linear-gradient(180deg,var(--crema) 0%,#F2F5FF 100%)}
@@ -653,8 +717,7 @@ footer li a:hover{color:#fff}
 [data-theme="dark"] .info-list .ref,
 [data-theme="dark"] .p-imprenta ul{color:var(--azul-txt)}
 [data-theme="dark"] .sec-head strong[style]{color:var(--azul-txt)!important}
-[data-theme="dark"] .chip-gal::before,
-[data-theme="dark"] .chip-gal::after{border-color:rgba(143,168,255,.14);box-shadow:none}
+[data-theme="dark"] .svc-card-in{background:var(--superficie-2)}
 [data-theme="dark"] .btn-line{border-color:var(--azul-txt);color:var(--azul-txt)}
 [data-theme="dark"] .btn-line:hover{background:var(--azul);border-color:var(--azul);color:#fff}
 [data-theme="dark"] .field input,

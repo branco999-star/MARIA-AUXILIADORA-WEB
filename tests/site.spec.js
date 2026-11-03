@@ -195,7 +195,7 @@ test("images have alt, size attributes, WebP and lazy loading below the fold", a
   const imgs = await page.$$eval("main img, nav img, footer img", els => els.map(i => ({
     src: i.getAttribute("src"), alt: i.getAttribute("alt"), w: i.getAttribute("width"), h: i.getAttribute("height"), lazy: i.getAttribute("loading"),
   })));
-  expect(imgs.length).toBe(41);
+  expect(imgs.length).toBe(48);
   for (const i of imgs) {
     expect(i.alt, i.src).not.toBeNull();
     expect(i.w && i.h, i.src).toBeTruthy();
@@ -309,21 +309,28 @@ test("Google Maps links and embedded map point to the store", async ({ page }) =
   expect(decodeURIComponent(await map.getAttribute("src"))).toContain("Imprenta+\"Maria+Auxiliadora\",+Prol.+28+de+Julio,+Lurigancho-Chosica+15468");
 });
 
+// Bring a service card to the centre of the carousel (via its dot, which also pauses autoplay) and open its gallery
+async function openService(page, id) {
+  const card = page.locator(`.svc-card[data-gal="${id}"]`);
+  const title = await card.getAttribute("data-title");
+  await page.getByRole("button", { name: `Ver ${title}`, exact: true }).click();
+  await expect(card).toHaveClass(/\bon\b/);
+  await card.click();
+  return card;
+}
+
 test.describe("category galleries", () => {
   const CATS = ["almanaques", "bolsas-kraft", "cajas-con-tu-logo", "cirios-velas-y-velones", "llaveros-y-souvenirs", "recuerdos-para-eventos", "cuadros-de-promocion"];
 
-  test("the service list has one gallery button per material folder, and no separate gallery section", async ({ page }) => {
+  test("the service carousel has one gallery card per material folder, and no separate gallery section", async ({ page }) => {
     await page.goto("/");
-    const ids = await page.$$eval(".servicios .chips .chip-gal", bs => bs.map(b => b.tagName + ":" + b.dataset.gal));
+    const ids = await page.$$eval(".servicios .svc-track .svc-card", bs => bs.map(b => b.tagName + ":" + b.dataset.gal));
     expect(ids).toEqual(CATS.map(c => "BUTTON:" + c));
     await expect(page.locator("#trabajos")).toHaveCount(0);
     await expect(page.locator('a[href="#trabajos"]')).toHaveCount(0);
-    const staticChips = await page.$$eval(".chips .chip:not(.chip-gal)", els => els.map(e => e.tagName));
+    const staticChips = await page.$$eval(".chips .chip", els => els.map(e => e.tagName));
     expect(staticChips.length).toBe(21);
     expect(new Set(staticChips)).toEqual(new Set(["DIV"]));
-    await page.setViewportSize({ width: 1440, height: 900 });
-    const [galW, chipW] = await page.evaluate(() => [".chip-gal", ".chip:not(.chip-gal)"].map(s => Math.round(document.querySelector(s).getBoundingClientRect().width)));
-    expect(galW).toBe(chipW);
   });
 
   test("every gallery file listed in galeria.json exists", async ({ page }) => {
@@ -346,8 +353,7 @@ test.describe("category galleries", () => {
 
   test("opening a category shows its photos and videos, and the viewer works with the keyboard", async ({ page }) => {
     await page.goto("/");
-    const opener = page.locator('.chip-gal[data-gal="bolsas-kraft"]');
-    await opener.click();
+    const opener = await openService(page, "bolsas-kraft");
     const gal = page.locator("#gal");
     await expect(gal).toBeVisible();
     await expect(page.locator("#galTitle")).toHaveText("Bolsas kraft");
@@ -372,18 +378,21 @@ test.describe("category galleries", () => {
 
   test("catalog categories show one group per PDF", async ({ page }) => {
     await page.goto("/");
-    await page.locator('.chip-gal[data-gal="recuerdos-para-eventos"]').click();
+    await openService(page, "recuerdos-para-eventos");
     await expect(page.locator("#galBody .gal-group h3")).toHaveCount(3);
     await expect(page.locator("#galBody .gal-thumb")).toHaveCount(128);
     await page.locator("#galBody .gal-thumb").nth(41).click();
     await expect(page.locator("#galMedia img")).toHaveAttribute("alt", "Catálogo de matrimonio — página 1");
   });
 
-  test("gallery does not load anything until opened", async ({ page }) => {
+  test("gallery does not load anything until opened, beyond the carousel cover thumbnails", async ({ page }) => {
     const requested = [];
-    page.on("request", r => { if (r.url().includes("/assets/galeria/")) requested.push(r.url()); });
+    page.on("request", r => { if (r.url().includes("/assets/galeria/")) requested.push(new URL(r.url()).pathname.slice(1)); });
     await page.goto("/", { waitUntil: "networkidle" });
-    expect(requested).toEqual([]);
+    const covers = await page.$$eval(".svc-card img", imgs => imgs.map(i => i.getAttribute("src")));
+    expect(covers).toHaveLength(7);
+    expect(covers.every(c => /-mini\.webp$/.test(c))).toBe(true);
+    expect(requested.filter(u => !covers.includes(u))).toEqual([]);
   });
 
   for (const viewport of [{ width: 375, height: 800 }, { width: 1440, height: 900 }]) {
@@ -391,7 +400,7 @@ test.describe("category galleries", () => {
       await page.setViewportSize(viewport);
       await page.emulateMedia({ reducedMotion: "reduce" });
       await page.goto("/");
-      await page.locator('.chip-gal[data-gal="cajas-con-tu-logo"]').click();
+      await openService(page, "cajas-con-tu-logo");
       await expect(page.locator("#galBody .gal-thumb")).toHaveCount(5);
       let results = await new AxeBuilder({ page }).include("#gal").analyze();
       let bad = results.violations.filter(v => ["serious", "critical"].includes(v.impact)).map(v => v.id);
@@ -529,7 +538,7 @@ test.describe("hero almanac campaign scenes", () => {
     await page.locator('#inicio .scene[data-scene="1"] [data-gal="almanaques"]').click();
     await expect(page.locator("#galTitle")).toHaveText("Almanaques");
     await expect(page.locator("#galBody .gal-play")).toHaveCount(3);
-    await expect(page.locator('.chip-gal[data-gal="almanaques"] small')).toHaveText("1 foto · 3 vídeos");
+    await expect(page.locator('.svc-card[data-gal="almanaques"] small')).toHaveText("1 foto · 3 vídeos");
   });
 
   for (const scene of [1, 2, 3]) {
@@ -569,10 +578,85 @@ test.describe("hero video sound", () => {
 
   test("hero clips and gallery videos carry an audio track", async ({ page }) => {
     await page.goto("/");
-    await page.locator('.chip-gal[data-gal="almanaques"]').click();
+    await openService(page, "almanaques");
     await page.locator("#galBody .gal-thumb").nth(1).click();
     const v = page.locator("#galMedia video");
     await expect(v).toHaveAttribute("controls", "");
     expect(await v.evaluate(el => el.muted)).toBe(false);
   });
+});
+
+test.describe("service carousel", () => {
+  const active = page => page.locator(".svc-card.on");
+  const activeColor = page => page.$$eval(".svc-color", els => els.findIndex(e => e.classList.contains("on")));
+
+  test("arrows, keys and dots move the deck, the stage colour and the current dot", async ({ page }) => {
+    await page.goto("/");
+    const stage = page.locator(".svc-stage");
+    await stage.scrollIntoViewIfNeeded();
+    await expect(active(page)).toHaveAttribute("data-gal", "almanaques");
+    await expect(page.locator(".svc-card[inert]")).toHaveCount(4);
+    await page.getByRole("button", { name: "Servicio siguiente" }).click();
+    await expect(active(page)).toHaveAttribute("data-gal", "bolsas-kraft");
+    expect(await activeColor(page)).toBe(1);
+    await expect(page.getByRole("button", { name: "Ver Bolsas kraft", exact: true })).toHaveAttribute("aria-current", "true");
+    await page.keyboard.press("ArrowRight");
+    await expect(active(page)).toHaveAttribute("data-gal", "cajas-con-tu-logo");
+    await page.keyboard.press("ArrowLeft");
+    await expect(active(page)).toHaveAttribute("data-gal", "bolsas-kraft");
+    await page.getByRole("button", { name: "Ver Cuadros de promoción", exact: true }).click();
+    await expect(active(page)).toHaveAttribute("data-gal", "cuadros-de-promocion");
+    expect(await activeColor(page)).toBe(6);
+    await page.getByRole("button", { name: "Servicio siguiente" }).click();
+    await expect(active(page)).toHaveAttribute("data-gal", "almanaques");
+    await page.getByRole("button", { name: "Servicio anterior" }).click();
+    await expect(active(page)).toHaveAttribute("data-gal", "cuadros-de-promocion");
+  });
+
+  test("plays on its own once visible", async ({ page }) => {
+    await page.goto("/");
+    await page.locator(".svc-stage").scrollIntoViewIfNeeded();
+    await page.mouse.move(1, 1);
+    await expect(active(page)).toHaveAttribute("data-gal", "almanaques");
+    await expect(active(page)).toHaveAttribute("data-gal", "bolsas-kraft", { timeout: 6000 });
+  });
+
+  test("does not play on its own with reduced motion", async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await page.goto("/");
+    await page.locator(".svc-stage").scrollIntoViewIfNeeded();
+    await page.mouse.move(1, 1);
+    await page.waitForTimeout(4500);
+    await expect(active(page)).toHaveAttribute("data-gal", "almanaques");
+  });
+
+  test("swipes on touch screens without opening a gallery", async ({ page }) => {
+    await page.setViewportSize(MOBILE);
+    await page.goto("/");
+    const track = page.locator(".svc-track");
+    await track.scrollIntoViewIfNeeded();
+    const swipe = async (from, to) => {
+      await page.locator(".svc-card.on").dispatchEvent("pointerdown", { pointerType: "touch", clientX: from, bubbles: true });
+      await page.locator(".svc-card.on").dispatchEvent("pointerup", { pointerType: "touch", clientX: to, bubbles: true });
+      await page.locator(".svc-card.on").dispatchEvent("click", { bubbles: true });
+    };
+    await swipe(300, 120);
+    await expect(active(page)).toHaveAttribute("data-gal", "bolsas-kraft");
+    await expect(page.locator("#gal")).toBeHidden();
+    await swipe(80, 300);
+    await expect(active(page)).toHaveAttribute("data-gal", "almanaques");
+    await expect(page.locator("#gal")).toBeHidden();
+  });
+
+  for (const viewport of [MOBILE, { width: 1440, height: 900 }]) {
+    test(`has no serious axe violations at ${viewport.width}px`, async ({ page }) => {
+      await page.setViewportSize(viewport);
+      await page.emulateMedia({ reducedMotion: "reduce" });
+      await page.goto("/");
+      await scrollAll(page);
+      await page.locator(".svc-stage").scrollIntoViewIfNeeded();
+      const results = await new AxeBuilder({ page }).include(".svc-stage").analyze();
+      expect(results.violations.filter(v => ["serious", "critical"].includes(v.impact)).map(v => v.id)).toEqual([]);
+    });
+  }
 });

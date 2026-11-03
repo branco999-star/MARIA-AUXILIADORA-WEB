@@ -360,6 +360,89 @@
     }
   });
 
+  /* Carrusel de servicios */
+  var svc = document.querySelector('.svc-stage');
+  if (svc){
+    var svcCards = Array.prototype.slice.call(svc.querySelectorAll('.svc-card'));
+    var svcColors = svc.querySelectorAll('.svc-color');
+    var svcDots = svc.querySelectorAll('.svc-dot');
+    var SVC_MS = 3500, svcIdx = 0, svcTimer = null, svcHover = false, svcFocus = false, svcSeen = false;
+    var svcN = svcCards.length;
+
+    var svcGo = function(i){
+      svcIdx = (i + svcN) % svcN;
+      svcCards.forEach(function(c, k){
+        // Shortest signed distance on the loop, so the deck wraps around
+        var off = k - svcIdx;
+        if (off > svcN / 2) off -= svcN;
+        if (off < -svcN / 2) off += svcN;
+        var abs = Math.abs(off);
+        c.style.setProperty('--off', off);
+        c.style.setProperty('--abs', Math.min(abs, 2));
+        c.classList.toggle('on', off === 0);
+        if (abs > 1) c.setAttribute('inert', ''); else c.removeAttribute('inert');
+      });
+      for (var k = 0; k < svcN; k++){
+        svcColors[k].classList.toggle('on', k === svcIdx);
+        if (k === svcIdx) svcDots[k].setAttribute('aria-current', 'true');
+        else svcDots[k].removeAttribute('aria-current');
+      }
+    };
+    var svcPlay = function(){
+      clearInterval(svcTimer);
+      svcTimer = null;
+      if (reduceMotion || svcHover || svcFocus || !svcSeen || document.hidden) return;
+      svcTimer = setInterval(function(){ svcGo(svcIdx + 1); }, SVC_MS);
+    };
+
+    svcCards.forEach(function(c, k){
+      c.addEventListener('click', function(){ svcGo(k); });
+    });
+    Array.prototype.forEach.call(svcDots, function(d, k){
+      d.addEventListener('click', function(){ svcGo(k); });
+    });
+    svc.querySelector('.svc-prev').addEventListener('click', function(){ svcGo(svcIdx - 1); });
+    svc.querySelector('.svc-next').addEventListener('click', function(){ svcGo(svcIdx + 1); });
+    svc.addEventListener('keydown', function(e){
+      if (e.key === 'ArrowLeft'){ e.preventDefault(); svcGo(svcIdx - 1); }
+      if (e.key === 'ArrowRight'){ e.preventDefault(); svcGo(svcIdx + 1); }
+    });
+    svc.addEventListener('mouseenter', function(){ svcHover = true; svcPlay(); });
+    svc.addEventListener('mouseleave', function(){ svcHover = false; svcPlay(); });
+    svc.addEventListener('focusin', function(){ svcFocus = true; svcPlay(); });
+    svc.addEventListener('focusout', function(e){
+      if (!svc.contains(e.relatedTarget)){ svcFocus = false; svcPlay(); }
+    });
+    document.addEventListener('visibilitychange', svcPlay);
+
+    // Swipe on touch screens; vertical scrolling stays native (touch-action: pan-y)
+    var svcX = null, svcSwiped = false;
+    var svcTrack = svc.querySelector('.svc-track');
+    svcTrack.addEventListener('pointerdown', function(e){ if (e.pointerType !== 'mouse'){ svcX = e.clientX; svcSwiped = false; } });
+    svcTrack.addEventListener('pointerup', function(e){
+      if (svcX === null) return;
+      var dx = e.clientX - svcX;
+      svcX = null;
+      if (Math.abs(dx) > 40){ svcSwiped = true; svcGo(svcIdx + (dx < 0 ? 1 : -1)); svcPlay(); }
+    });
+    svcTrack.addEventListener('pointercancel', function(){ svcX = null; });
+    // A swipe must not also open the gallery of the card it started on
+    svcTrack.addEventListener('click', function(e){
+      if (svcSwiped){ e.stopPropagation(); svcSwiped = false; }
+    }, true);
+
+    if ('IntersectionObserver' in window){
+      new IntersectionObserver(function(entries){
+        svcSeen = entries[0].isIntersecting;
+        svcPlay();
+      }, {threshold:.4}).observe(svc);
+    } else {
+      svcSeen = true;
+    }
+    svcGo(0);
+    svcPlay();
+  }
+
   /* Formulario -> WhatsApp */
   document.getElementById('cotiza').addEventListener('submit', function(e){
     e.preventDefault();
