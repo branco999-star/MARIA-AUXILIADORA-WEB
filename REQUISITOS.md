@@ -38,8 +38,10 @@ Web de una sola página para la Imprenta, Librería y Bazar "María Auxiliadora"
 - [x] El formulario exige el nombre y no guarda datos
 - [x] Modo oscuro: sigue la configuración del sistema y tiene un botón sol/luna en el menú que recuerda la elección
 - [x] El modo oscuro cumple contraste AA y no altera las fotos de productos
-- [x] En «Todo lo que hacemos», los servicios con material (con aspecto de carpeta y contador de fotos/vídeos) abren su galería de fotos, vídeos y catálogos, usable con teclado
-- [x] La galería no descarga nada hasta que se abre una categoría
+- [x] En «Todo lo que hacemos», los servicios con material se muestran en un carrusel 3D de tarjetas (foto real, título y contador de fotos/vídeos); al tocar una tarjeta se abre su galería, usable con teclado
+- [x] El fondo del carrusel cambia de color con cada tarjeta (paleta de marca) y la tarjeta activa se balancea suavemente (inspirado en el shot "EdTech Mascot Character Animation" de Abron Studio, sin mascota)
+- [x] El carrusel se mueve con flechas, puntos, teclas ← → y deslizando en móvil; avanza solo cada 3,5 s cuando está a la vista, se pausa con el ratón o el foco encima y no se mueve solo con «reducir movimiento»
+- [x] La galería no descarga nada hasta que se abre una categoría (salvo las 8 miniaturas de portada del carrusel)
 - [x] Para regenerar la galería tras cambiar las carpetas: `FFMPEG=<ruta a ffmpeg.exe> node tools/build-gallery.mjs` (con `npm run serve` en marcha)
 
 ### Calidad
