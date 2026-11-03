@@ -18,7 +18,7 @@ const CATEGORIES = [
   { id: "cajas-con-tu-logo", title: "Cajas con tu logo", folder: "Cajas con tu logo" },
   { id: "cirios-velas-y-velones", title: "Cirios, velas y velones", folder: "Cirios, velas y velones" },
   { id: "llaveros-y-souvenirs", title: "Llaveros y souvenirs", folder: "Llaveros y souvenirs" },
-  { id: "recuerdos-para-eventos", title: "Recuerdos para eventos", folder: "Recuerdos para eventos" },
+  { id: "invitaciones", title: "Invitaciones", folder: "Recuerdos para eventos" },
   { id: "cuadros-de-promocion", title: "Cuadros de promoción", folder: "cuadros de promocion" },
   { id: "diseno-grafico", title: "Diseño gráfico", folder: "diseño grafico" },
 ];
