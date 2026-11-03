@@ -832,7 +832,6 @@ footer li a:hover{color:#fff}
 .scene-dot.is-done .fill{transform:scaleX(1)}
 .scene-dot.is-on .fill{animation:fill var(--scene-ms,7000ms) linear forwards}
 .hero.is-paused .scene-dot.is-on .fill,.hero.is-hold .scene-dot.is-on .fill{animation-play-state:paused}
-.hero.is-static .scene-dot.is-on .fill{animation:none;transform:scaleX(1)}
 @keyframes fill{to{transform:scaleX(1)}}
 
 @media (max-width:980px){
@@ -885,3 +884,30 @@ footer li a:hover{color:#fff}
 @media (prefers-reduced-motion:reduce){.sound-hint::after{animation:none}}
 [data-theme="dark"] .scene-sound{background:var(--superficie-2);color:var(--tinta);box-shadow:0 0 0 1px rgba(143,168,255,.35)}
 [data-theme="dark"] .hero.has-sound .scene-sound{background:var(--azul);color:#fff}
+
+/* Subtle prev/next arrows: in the control row on small screens, at the hero sides on wide screens */
+.scene-arrow{
+  width:44px;height:44px;border-radius:50%;display:grid;place-items:center;flex:none;
+  background:rgba(255,255,255,.55);color:var(--azul-osc);border:1px solid rgba(16,24,64,.08);
+  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);opacity:.75;
+  transition:opacity .2s ease, transform .2s ease, background .2s ease;
+}
+.scene-arrow:hover{opacity:1;background:#fff}
+.scene-prev:hover{transform:translateX(-2px)}
+.scene-next:hover{transform:translateX(2px)}
+.scene-arrow:active{transform:scale(.94)}
+@media (min-width:1400px){
+  .scene-arrow{position:absolute;top:50%;margin-top:-50px;width:48px;height:48px;opacity:.55}
+  .scene-prev{left:-76px}
+  .scene-next{right:-76px}
+  .hero-grid:hover .scene-arrow{opacity:.85}
+}
+[data-theme="dark"] .scene-arrow{background:rgba(20,27,54,.6);color:var(--tinta);border-color:rgba(143,168,255,.2)}
+[data-theme="dark"] .scene-arrow:hover{background:var(--superficie-2)}
+@media (max-width:640px){
+  .scene-ctl{gap:4px}
+  .scene-dot{width:30px}
+}
+@media (max-width:360px){
+  .scene-dot{width:22px}
+}

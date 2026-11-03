@@ -60,8 +60,8 @@ Web de una sola página para la Imprenta, Librería y Bazar "María Auxiliadora"
 - [x] Los vídeos tienen sonido: empiezan silenciados (los navegadores no permiten reproducir sonido automáticamente) y el botón de altavoz o la burbuja «Toca para escuchar» lo activan para toda la visita
 - [x] Los vídeos de las galerías también tienen sonido (salvo el de Bolsas kraft, que no tiene audio en el original)
 - [x] Botones de WhatsApp de la campaña con el mensaje "Hola, quiero cotizar almanaques 2027 para mi negocio."
-- [x] Barras de progreso para saltar de escena y botón de pausa; se detiene al pasar el ratón o con el foco
-- [x] Con "movimiento reducido" activado no hay cambio automático ni vídeo automático
+- [x] Avanza sola desde la primera escena (aunque el ratón esté encima); barras de progreso, flechas sutiles ‹ › y botón de pausa para navegar
+- [x] Con "movimiento reducido" activado las escenas siguen avanzando, pero sin animaciones ni vídeo automático
 - [x] "Ver modelos" abre la galería de Almanaques (ahora con 3 vídeos)
 - [x] Para regenerar los clips de la portada: `FFMPEG=<ruta a ffmpeg.exe> node tools/build-hero-clips.mjs`
 

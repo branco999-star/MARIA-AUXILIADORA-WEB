@@ -484,15 +484,43 @@ test.describe("hero almanac campaign scenes", () => {
     await expect(hero).toHaveAttribute("data-scene", "2");
   });
 
-  test("with reduced motion there is no automatic advance", async ({ browser }) => {
-    const context = await browser.newContext({ reducedMotion: "reduce" });
-    const page = await context.newPage();
-    await page.clock.install();
-    await page.goto("/");
-    await page.clock.runFor(30000);
-    await expect(page.locator("#inicio")).toHaveAttribute("data-scene", "0");
-    await expect(page.locator("#scenePause")).toHaveAttribute("aria-pressed", "true");
-    await context.close();
+  test("advances on its own from the very first scene, even with the mouse over it or reduced motion", async ({ browser }) => {
+    for (const reducedMotion of ["no-preference", "reduce"]) {
+      const context = await browser.newContext({ reducedMotion, viewport: { width: 1440, height: 900 } });
+      const page = await context.newPage();
+      await page.clock.install();
+      await page.goto("/");
+      const hero = page.locator("#inicio");
+      await page.mouse.move(700, 500); // pointer resting on the hero
+      await page.clock.runFor(15100);
+      await expect(hero, reducedMotion).toHaveAttribute("data-scene", "1");
+      await expect(page.locator("#scenePause")).toHaveAttribute("aria-pressed", "false");
+      // Clicking a progress bar must not leave it stuck afterwards
+      await page.getByRole("button", { name: /Ver escena 3/ }).click();
+      await page.clock.runFor(15100);
+      await expect(hero, reducedMotion).toHaveAttribute("data-scene", "3");
+      await context.close();
+    }
+  });
+
+  test("subtle arrows move to the previous and next scene, wrapping around", async ({ page }) => {
+    for (const width of [375, 1440]) {
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto("/");
+      const hero = page.locator("#inicio");
+      const next = page.getByRole("button", { name: "Escena siguiente" });
+      const prev = page.getByRole("button", { name: "Escena anterior" });
+      await expect(next).toBeVisible();
+      await expect(prev).toBeVisible();
+      await next.click();
+      await expect(hero).toHaveAttribute("data-scene", "1");
+      await prev.click();
+      await prev.click();
+      await expect(hero).toHaveAttribute("data-scene", "3");
+      const box = await next.boundingBox();
+      expect(box.width).toBeGreaterThanOrEqual(44);
+      expect(box.x + box.width).toBeLessThanOrEqual(width);
+    }
   });
 
   test("'Ver modelos' opens the almanac gallery with the new video", async ({ page }) => {

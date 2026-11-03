@@ -38,16 +38,11 @@
   var SCENE_MS = 15000;
   var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var sceneIdx = 0, sceneTimer = null, sceneStart = 0, sceneLeft = SCENE_MS;
-  var userPaused = reduceMotion, held = false, soundOn = false;
+  var userPaused = false, held = false, soundOn = false;
   var soundBtn = document.getElementById('sceneSound');
   var heroVideos = Array.prototype.slice.call(hero.querySelectorAll('video'));
 
   hero.style.setProperty('--scene-ms', SCENE_MS + 'ms');
-  if (reduceMotion){
-    hero.classList.add('is-static', 'is-paused');
-    pauseBtn.setAttribute('aria-pressed', 'true');
-    pauseBtn.setAttribute('aria-label', 'Reanudar portada');
-  }
 
   function playSceneVideo(scene){
     var v = scene.querySelector('video');
@@ -95,9 +90,9 @@
     pauseBtn.setAttribute('aria-label', p ? 'Reanudar portada' : 'Pausar portada');
     var v = scenes[sceneIdx].querySelector('video');
     if (p){ stopTimer(); if (v) v.pause(); }
-    else { hero.classList.remove('is-static'); playSceneVideo(scenes[sceneIdx]); startTimer(SCENE_MS); }
+    else { playSceneVideo(scenes[sceneIdx]); startTimer(SCENE_MS); }
   }
-  // Hold while the visitor is pointing at or focused inside the hero
+  // Hold only while a keyboard user is moving through the hero (or the tab is hidden)
   function hold(on){
     if (held === on || userPaused) { held = on; return; }
     held = on;
@@ -130,13 +125,15 @@
   hero.querySelectorAll('[data-goto]').forEach(function(b){
     b.addEventListener('click', function(){ goTo(+b.dataset.goto); });
   });
+  document.getElementById('scenePrev').addEventListener('click', function(){ goTo(sceneIdx - 1); });
+  document.getElementById('sceneNext').addEventListener('click', function(){ goTo(sceneIdx + 1); });
   var heroGrid = hero.querySelector('.hero-grid');
-  heroGrid.addEventListener('mouseenter', function(){ hold(true); });
-  heroGrid.addEventListener('mouseleave', function(){ hold(false); });
-  heroGrid.addEventListener('focusin', function(){ hold(true); });
+  heroGrid.addEventListener('focusin', function(e){ if (e.target.matches(':focus-visible')) hold(true); });
   heroGrid.addEventListener('focusout', function(e){ if (!heroGrid.contains(e.relatedTarget)) hold(false); });
+  // Clicking a control with the mouse must not leave the carousel stuck on hold
+  heroGrid.addEventListener('pointerdown', function(){ if (held) hold(false); });
   document.addEventListener('visibilitychange', function(){ hold(document.hidden); });
-  if (!reduceMotion) startTimer(SCENE_MS);
+  startTimer(SCENE_MS);
 
   /* Nav scroll */
   var nav = document.getElementById('nav');
