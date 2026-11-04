@@ -73,6 +73,7 @@ Origen: catálogo FlipHTML5 "CATALOGO CALENDARIO NAVARRETE 2027" (68 páginas). 
 - [x] Botón «Mira el catálogo» en las 3 escenas de la campaña de la portada y en una franja destacada propia («Catálogo de calendarios 2027», antes de Promociones) con la portada en 3D
 - [x] La portada del catálogo de la escena 4 se puede pulsar y abre el catálogo
 - [x] El catálogo se abre en un visor a pantalla completa con efecto de pasar página (libro abierto a doble página en escritorio, una página en móvil)
+- [x] Botones para ir directamente a la portada (|‹) y a la última página (›|)
 - [x] Se navega con flechas, teclado (← →), deslizando el dedo y con un índice por secciones (Cromos, Anuales, Decorativos, Edinas, Cuatrimestrales, Escritorio, Tarjeta, Pared y bolsillo, Imágenes 2027)
 - [x] Contador "Página N de 66" y botón de WhatsApp que pide el modelo citando la página que se está viendo
 - [x] Ampliar una página para leer los códigos (zoom)

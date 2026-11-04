@@ -519,8 +519,12 @@
       catBar.style.transform = 'scaleX(' + ((p[1] || p[0]) / CAT_N) + ')';
       catBook.classList.toggle('is-cover', catSpread() && !p[0]);
       catBook.classList.toggle('is-back', catSpread() && !p[1]);
-      document.getElementById('catPrev').disabled = catPage <= 1 || (catSpread() && !p[0]);
-      document.getElementById('catNext').disabled = catSpread() ? !p[1] || p[1] >= CAT_N : catPage >= CAT_N;
+      var atStart = catPage <= 1 || (catSpread() && !p[0]);
+      var atEnd = catSpread() ? !p[1] || p[1] >= CAT_N : catPage >= CAT_N;
+      document.getElementById('catPrev').disabled = atStart;
+      document.getElementById('catFirst').disabled = atStart;
+      document.getElementById('catNext').disabled = atEnd;
+      document.getElementById('catLast').disabled = atEnd;
       catWa.href = WA + encodeURIComponent('Hola, vi el catálogo de calendarios 2027 en la página web y me interesa ' + (p[0] && p[1] ? 'lo de las ' : 'lo de la ') + catLabel(p).toLowerCase() + '.');
       history.replaceState(null, '', '#catalogo-' + catPage);
       // Warm up the next and previous pages so turning feels instant
@@ -659,6 +663,8 @@
     document.getElementById('catClose').addEventListener('click', catClose);
     document.getElementById('catNext').addEventListener('click', catNext);
     document.getElementById('catPrev').addEventListener('click', catPrev);
+    document.getElementById('catFirst').addEventListener('click', function(){ catGo(1); });
+    document.getElementById('catLast').addEventListener('click', function(){ catGo(CAT_N); });
     catIndexBtn.addEventListener('click', function(){ catToggleIndex(catIndex.hidden); });
     document.getElementById('catIndexClose').addEventListener('click', function(){ catToggleIndex(false); catIndexBtn.focus(); });
     document.getElementById('catZoomBtn').addEventListener('click', function(){ catOpenZoom(catPair(catPage)); });
