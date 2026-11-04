@@ -65,14 +65,30 @@ Web de una sola página para la Imprenta, Librería y Bazar "María Auxiliadora"
 - [x] Botones de WhatsApp de la campaña con el mensaje "Hola, quiero cotizar almanaques 2027 para mi negocio."
 - [x] Avanza sola desde la primera escena (aunque el ratón esté encima); barras de progreso, flechas sutiles ‹ › y botón de pausa para navegar
 - [x] Con "movimiento reducido" activado las escenas siguen avanzando, pero sin animaciones ni vídeo automático
-- [x] "Ver modelos" abre la galería de Almanaques (ahora con 3 vídeos)
+- [x] En las escenas de la campaña, «Mira el catálogo» sustituye a «Ver modelos»; la galería de Almanaques (3 vídeos) sigue en el carrusel de Servicios
 - [x] Para regenerar los clips de la portada: `FFMPEG=<ruta a ffmpeg.exe> node tools/build-hero-clips.mjs`
+
+### Catálogo de calendarios 2027 (visor propio)
+Origen: catálogo FlipHTML5 "CATALOGO CALENDARIO NAVARRETE 2027" (68 páginas). Cambios pedidos: la página 1 pasa a ser la portada propia de la imprenta y se quitan las páginas 67 (agendas Navarrete) y 68 (contraportada Navarrete). Resultado: 66 páginas.
+- [x] Botón «Mira el catálogo» en las 3 escenas de la campaña de la portada y en una franja destacada propia («Catálogo de calendarios 2027», antes de Promociones) con la portada en 3D
+- [x] La portada del catálogo de la escena 4 se puede pulsar y abre el catálogo
+- [x] El catálogo se abre en un visor a pantalla completa con efecto de pasar página (libro abierto a doble página en escritorio, una página en móvil)
+- [x] Se navega con flechas, teclado (← →), deslizando el dedo y con un índice por secciones (Cromos, Anuales, Decorativos, Edinas, Cuatrimestrales, Escritorio, Tarjeta, Pared y bolsillo, Imágenes 2027)
+- [x] Contador "Página N de 66" y botón de WhatsApp que pide el modelo citando la página que se está viendo
+- [x] Ampliar una página para leer los códigos (zoom)
+- [x] Enlace directo para compartir: `#catalogo` abre el catálogo (y `#catalogo-12` en la página 12); la franja usa el ancla `#calendarios-2027`
+- [x] Las páginas solo se descargan al abrir el catálogo y de forma progresiva (la actual y las vecinas)
+- [x] Usable con teclado y lector de pantalla; Escape cierra y el foco vuelve al botón que lo abrió
+- [x] Con «reducir movimiento» las páginas cambian sin animación de giro
+- [x] Para regenerar las páginas: `FFMPEG=<ruta a ffmpeg.exe> node tools/build-catalog.mjs <carpeta con p01.webp…p68.webp> <portada.jpg>`
 
 ## Supuestos
 - Se mantiene la paleta completa de la web anterior (incluye rosa, morado, verde y naranja además de los colores de marca), porque esa web es la base. Solo se oscurecen los colores que no cumplan el contraste AA.
 - Los textos se toman tal cual de la web anterior; se consideran ya revisados.
 - Los datos de contacto, el RUC, la oferta del 10 %, "delivery gratis" y "tu logo desde 20 soles" se dan por vigentes.
 - Las imágenes son las mismas de la web anterior (ya optimizadas en WebP, sin metadatos).
+- Catálogo: "en la primera página un botón «Mira el catálogo»" se interpreta como la portada de la web (las escenas de la campaña), que es lo primero que se ve. Se usa un visor propio en vez de incrustar FlipHTML5 para no mostrar publicidad ni la marca del proveedor, y para que cargue rápido.
+- Catálogo: las páginas interiores conservan el texto lateral pequeño "Calendarios Navarrete 2027", que forma parte de la imagen original.
 
 ## Cambios respecto a la web anterior
 - Separada en `index.html`, `css/`, `js/` y `assets/img/` (antes era un solo archivo de 2,2 MB con las imágenes en base64).
