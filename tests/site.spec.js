@@ -818,6 +818,28 @@ test.describe("calendar catalog 2027", () => {
     await expect(page).not.toHaveURL(/#catalogo/);
   });
 
+  for (const viewport of [MOBILE, DESKTOP]) {
+    test(`buttons jump straight to the cover and to the last page at ${viewport.width}px`, async ({ page }) => {
+      await page.setViewportSize(viewport);
+      await page.goto("/#catalogo-20");
+      const first = page.getByRole("button", { name: "Ir a la portada" });
+      const last = page.getByRole("button", { name: "Ir a la última página" });
+      await last.click();
+      await expect(count(page)).toHaveText("Página 66 de 66");
+      await expect(last).toBeDisabled();
+      await expect(page.locator("#catNext")).toBeDisabled();
+      await first.click();
+      await expect(count(page)).toHaveText("Página 1 de 66");
+      await expect(first).toBeDisabled();
+      await expect(last).toBeEnabled();
+      // All five controls fit on the screen without overlapping
+      const boxes = await page.$$eval(".cat-foot > *", els => els.map(e => e.getBoundingClientRect()).map(r => [r.left, r.right]));
+      expect(boxes[0][0]).toBeGreaterThanOrEqual(0);
+      expect(boxes[boxes.length - 1][1]).toBeLessThanOrEqual(viewport.width);
+      for (let i = 1; i < boxes.length; i++) expect(boxes[i][0]).toBeGreaterThanOrEqual(boxes[i - 1][1]);
+    });
+  }
+
   test("turns pages without the flip animation when reduced motion is on", async ({ page }) => {
     await page.setViewportSize(DESKTOP);
     await page.emulateMedia({ reducedMotion: "reduce" });
