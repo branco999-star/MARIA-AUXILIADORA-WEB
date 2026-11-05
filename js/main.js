@@ -422,6 +422,9 @@
       if (svcPanel.getAnimations) svcPanel.getAnimations({subtree: true}).forEach(function(a){ a.cancel(); });
       svcPanel.hidden = false;
       svcOpenBtn.setAttribute('aria-expanded', 'true');
+      // With many services the board can be taller than the deck: let the stage grow while the panel is open
+      svc.style.minHeight = '';
+      if (svcPanel.scrollHeight > svc.clientHeight) svc.style.minHeight = (svcPanel.scrollHeight + 48) + 'px';
       svcPlay();
       if (!reduceMotion && svcPanel.animate){
         svcPanel.animate([{opacity: 0}, {opacity: 1}], {duration: 220, easing: 'ease-out'});
@@ -440,6 +443,7 @@
         // Reopened while the closing animation ran: leave it open
         if (svcOpenBtn.getAttribute('aria-expanded') === 'true') return;
         svcPanel.hidden = true;
+        svc.style.minHeight = '';
         svcPlay();
       };
       if (focusEl) focusEl.focus({preventScroll: true});

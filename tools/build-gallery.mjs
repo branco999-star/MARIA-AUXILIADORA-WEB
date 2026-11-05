@@ -21,7 +21,12 @@ const CATEGORIES = [
   { id: "llaveros-y-souvenirs", title: "Llaveros y souvenirs", folder: "Llaveros y souvenirs" },
   { id: "invitaciones", title: "Invitaciones", folder: "Recuerdos para eventos" },
   { id: "cuadros-de-promocion", title: "Cuadros de promoción", folder: "cuadros de promocion" },
-  { id: "diseno-grafico", title: "Diseño gráfico", folder: "diseño grafico" },
+  { id: "diseno-grafico", title: "Diseño gráfico", folder: "diseño grafico", blur: {
+    "PM (1).jpeg": { x: 70, y: 1450, w: 1030, h: 130 },
+    "PM (2).jpeg": { x: 20, y: 455, w: 440, h: 150 },
+    "PM (3).jpeg": [{ x: 360, y: 275, w: 345, h: 60 }, { x: 205, y: 455, w: 600, h: 175 }],
+    "PM (4).jpeg": { x: 230, y: 1270, w: 470, h: 130 },
+  } },
   { id: "impresiones-y-copias", title: "Impresiones y copias", folder: "Impresiones y copias",
     alts: ["Impresiones a todo color de documentos y volantes"] },
   { id: "diagramacion", title: "Diagramación", folder: "Diagramacion",
@@ -46,6 +51,44 @@ const CATEGORIES = [
     blur: { "10.26.20": { x: 375, y: 790, w: 390, h: 335 } } },
   { id: "corte-y-anillado", title: "Corte y anillado", folder: "Corte y anillado",
     alts: ["Guillotina cortando un taco de hojas", "Documentos anillados con espiral y tapas de colores"] },
+  // The mock-up with three clients' cards is left out: with their data blurred it no longer reads well
+  { id: "tarjetas-y-volantes", title: "Tarjetas y volantes", folder: "Tarjetas y volantes", pick: [
+    ["10.26.42 PM.jpeg", "Volante turístico «Vive Cumbe, la ruta de los deseos»"],
+    ["10.26.52 PM.jpeg", "Taco de tarjetas de presentación a todo color para un equipo de sonido"],
+  ], blur: { "10.26.52 PM.jpeg": { x: 640, y: 265, w: 140, h: 90 } } },
+  { id: "placas-de-reconocimiento", title: "Placas de reconocimiento", folder: "Placas de reconocimiento", pick: [
+    ["10.00.53 PM.jpeg", "Placa de acrílico con base azul en su estuche rojo"],
+    ["10.00.52 PM (1).jpeg", "Reconocimiento de acrílico rojo para una empresa en su estuche"],
+    ["10.00.52 PM.jpeg", "Plato recordatorio de metal con placa dorada grabada"],
+    ["10.00.53 PM (1).jpeg", "Reconocimiento de vidrio con laurel grabado en su estuche"],
+    ["10.09.23 PM.jpeg", "Placa dorada de reconocimiento sobre base de ónix"],
+    ["10.09.23 PM (1).jpeg", "Placa de mármol conmemorativa de una obra municipal"],
+  ], blur: {
+    "10.00.52 PM.jpeg": { x: 230, y: 785, w: 450, h: 70 },
+    "10.00.53 PM (1).jpeg": { x: 380, y: 790, w: 330, h: 60 },
+    "10.00.53 PM.jpeg": { x: 290, y: 650, w: 390, h: 52 },
+    "10.09.23 PM (1).jpeg": [{ x: 260, y: 782, w: 460, h: 40 }, { x: 220, y: 898, w: 550, h: 172 }],
+    "10.09.23 PM.jpeg": [{ x: 240, y: 745, w: 430, h: 40 }, { x: 485, y: 920, w: 180, h: 45 }],
+  } },
+  { id: "copas-personalizadas", title: "Copas personalizadas", folder: "Copas personalizadas",
+    alts: ["Copas de aniversario con nombres en letras doradas y lazos rosados"],
+    crop: { "10.09.23 PM.jpeg": { x: 0, y: 160, w: 738, h: 1040 } } },
+  { id: "imagenes-de-santos", title: "Imágenes de santos", folder: "magenes de santos" },
+  // Generic CC0 photos (sources and licences in tools/genericas-fuentes.json), kept in the git-ignored genericas/ folder
+  { id: "sobres-y-folders", title: "Sobres y folders", folder: "genericas/sobres-y-folders",
+    alts: ["Folders colgantes de colores en un archivador", "Folders de cartulina con pestañas en un archivador", "Escritorio con sobre kraft y tarjeta", "Sobre rosado colgado con una pinza"] },
+  { id: "agendas", title: "Agendas", folder: "genericas/agendas",
+    alts: ["Persona escribiendo en una agenda anillada", "Agendas y cuadernos rosados sobre un escritorio blanco", "Agenda de tapa blanca con dos lapiceros"] },
+  { id: "libros-contables", title: "Libros contables", folder: "genericas/libros-contables",
+    alts: ["Contabilidad con calculadora y laptop sobre el escritorio", "Calculadora azul con lápiz y notas adhesivas"] },
+  { id: "cintas-de-embalaje-y-film", title: "Cintas de embalaje y film", folder: "genericas/cintas-de-embalaje-y-film",
+    alts: ["Caja blanca sellada con cinta de embalaje", "Cajas de cartón embaladas"] },
+  { id: "escaneos", title: "Escaneos", folder: "genericas/escaneos",
+    alts: ["Persona colocando un documento en el escáner", "Escaneo de una hoja en una impresora multifuncional"] },
+  { id: "tipeos", title: "Tipeos", folder: "genericas/tipeos",
+    alts: ["Manos tipeando un documento en una laptop", "Manos escribiendo en el teclado de una laptop"] },
+  { id: "creacion-de-paginas-web", title: "Creación de páginas web", folder: "genericas/creacion-de-paginas-web",
+    alts: ["Página web de la imprenta vista en una computadora", "Página web de la imprenta vista en un celular"] },
 ];
 const ONLY = process.argv.slice(2);
 const todo = ONLY.length ? CATEGORIES.filter(c => ONLY.includes(c.id)) : CATEGORIES;
@@ -87,8 +130,14 @@ for (const cat of todo) {
   for (const f of files.filter(f => /\.jpe?g$/i.test(f))) {
     const base = `${dir}/foto-${pad(++nPhoto)}`;
     const src = path.join(cat.folder, f);
-    const b = cat.blur && Object.entries(cat.blur).find(([k]) => f.includes(k));
-    const pre = b ? `split[a][b];[b]crop=${b[1].w}:${b[1].h}:${b[1].x}:${b[1].y},boxblur=20:4[bl];[a][bl]overlay=${b[1].x}:${b[1].y},` : "";
+    // Personal data (names, phones, emails) is blurred region by region; an optional crop drops phone-screen UI
+    const hit = obj => obj && Object.entries(obj).find(([k]) => f.includes(k));
+    const b = hit(cat.blur), crop = hit(cat.crop);
+    const zones = b ? [].concat(b[1]) : [];
+    // Chroma planes are half size, so the radius must stay under a quarter of the zone's short side
+    const blurR = z => Math.max(2, Math.min(20, Math.floor(Math.min(z.w, z.h) / 4) - 1));
+    let pre = zones.map((z, i) => `split[a${i}][b${i}];[b${i}]crop=${z.w}:${z.h}:${z.x}:${z.y},boxblur=${blurR(z)}:${blurR(z) < 12 ? 8 : 4}[c${i}];[a${i}][c${i}]overlay=${z.x}:${z.y},`).join("");
+    if (crop) pre += `crop=${crop[1].w}:${crop[1].h}:${crop[1].x}:${crop[1].y},`;
     ff(["-i", src, "-map_metadata", "-1", "-vf", `${pre}scale='min(1200,iw)':-2`, "-c:v", "libwebp", "-quality", "80", `${base}.webp`]);
     ff(["-i", src, "-map_metadata", "-1", "-vf", `${pre}scale='min(360,iw)':-2`, "-c:v", "libwebp", "-quality", "70", `${base}-mini.webp`]);
     const { w, h } = probeSize(`${base}.webp`);
