@@ -1118,3 +1118,40 @@ test.describe("catalog page-turn sound", () => {
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(MOBILE.width);
   });
 });
+
+test.describe("service photo viewer on phones", () => {
+  test("swiping with a finger moves between photos without closing the viewer", async ({ page }) => {
+    await page.setViewportSize(MOBILE);
+    await page.goto("/");
+    await page.locator(".svc-stage").scrollIntoViewIfNeeded();
+    await openService(page, "sellos");
+    await page.locator("#gal .gal-thumb").first().click();
+    const caption = page.locator("#galCaption");
+    await expect(caption).toContainText("1 de 7");
+    const swipe = async (from, to) => {
+      const view = page.locator("#galView");
+      await view.dispatchEvent("pointerdown", { pointerType: "touch", isPrimary: true, clientX: from, clientY: 400, bubbles: true });
+      await view.dispatchEvent("pointerup", { pointerType: "touch", isPrimary: true, clientX: to, clientY: 410, bubbles: true });
+      await view.dispatchEvent("click", { bubbles: true });
+    };
+    await swipe(300, 80);
+    await expect(caption).toContainText("2 de 7");
+    await expect(page.locator("#galView")).toBeVisible();
+    await swipe(80, 300);
+    await expect(caption).toContainText("1 de 7");
+    await swipe(80, 300);
+    await expect(caption).toContainText("7 de 7");
+    // A small or mostly vertical move is not a swipe
+    await page.locator("#galView").dispatchEvent("pointerdown", { pointerType: "touch", isPrimary: true, clientX: 200, clientY: 200, bubbles: true });
+    await page.locator("#galView").dispatchEvent("pointerup", { pointerType: "touch", isPrimary: true, clientX: 250, clientY: 500, bubbles: true });
+    await expect(caption).toContainText("7 de 7");
+  });
+
+  test("the Servicios label is bigger than the other section labels", async ({ page }) => {
+    await page.goto("/");
+    const sizes = await page.$$eval(".eyebrow", els => els.map(e => [e.textContent.trim(), parseFloat(getComputedStyle(e).fontSize)]));
+    const svc = sizes.find(([t]) => t === "Servicios")[1];
+    const others = sizes.filter(([t]) => t !== "Servicios").map(([, s]) => s);
+    expect(svc).toBeGreaterThan(Math.max(...others));
+  });
+});

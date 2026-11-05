@@ -823,6 +823,9 @@ footer li a:hover{color:#fff}
   display:flex;flex-direction:column;align-items:center;justify-content:center;padding:76px 72px 24px;
 }
 .gal-view[hidden]{display:none}
+.gal-view{touch-action:pan-y pinch-zoom}
+/* Bigger section label for the services block */
+.eyebrow.eyebrow-lg{font-size:1.05rem;padding:11px 24px;letter-spacing:.16em}
 .gv-media{display:flex;justify-content:center;max-width:100%}
 .gv-media img,.gv-media video{
   max-width:min(1000px,100%);max-height:calc(100vh - 160px);width:auto;height:auto;
