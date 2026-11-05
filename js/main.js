@@ -147,10 +147,12 @@
     var open = mm.classList.toggle('open');
     burger.classList.toggle('open', open);
     burger.setAttribute('aria-expanded', open ? 'true' : 'false');
+    document.body.classList.toggle('menu-open', open);
   });
   mm.querySelectorAll('a').forEach(function(a){
     a.addEventListener('click', function(){
       mm.classList.remove('open'); burger.classList.remove('open');
+      document.body.classList.remove('menu-open');
       burger.setAttribute('aria-expanded','false');
     });
   });
@@ -734,6 +736,21 @@
     };
     window.addEventListener('hashchange', catFromHash);
     catFromHash();
+  }
+
+  /* Mini portada flotante del catálogo */
+  var catFloat = document.getElementById('catFloat');
+  if (catFloat){
+    var CAT_FLOAT_KEY = 'catFloatClosed';
+    var floatClosed = false;
+    try { floatClosed = sessionStorage.getItem(CAT_FLOAT_KEY) === '1'; } catch (e) {}
+    if (!floatClosed) catFloat.hidden = false;
+    document.getElementById('catFloatX').addEventListener('click', function(){
+      try { sessionStorage.setItem(CAT_FLOAT_KEY, '1'); } catch (e) {}
+      if (reduceMotion){ catFloat.hidden = true; return; }
+      catFloat.classList.add('is-out');
+      setTimeout(function(){ catFloat.hidden = true; }, 300);
+    });
   }
 
   /* Formulario -> WhatsApp */
