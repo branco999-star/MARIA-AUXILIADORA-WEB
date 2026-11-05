@@ -195,7 +195,7 @@ test("images have alt, size attributes, WebP and lazy loading below the fold", a
   const imgs = await page.$$eval("main img, nav img, footer img", els => els.map(i => ({
     src: i.getAttribute("src"), alt: i.getAttribute("alt"), w: i.getAttribute("width"), h: i.getAttribute("height"), lazy: i.getAttribute("loading"),
   })));
-  expect(imgs.length).toBe(49);
+  expect(imgs.length).toBe(54);
   for (const i of imgs) {
     expect(i.alt, i.src).not.toBeNull();
     expect(i.w && i.h, i.src).toBeTruthy();
@@ -302,7 +302,7 @@ test("footer legal line uses the full width", async ({ page }) => {
 test("Google Maps links and embedded map point to the store", async ({ page }) => {
   await page.goto("/");
   const hrefs = await page.$$eval('a[href*="maps.app.goo.gl"]', as => as.map(a => a.href));
-  expect(hrefs).toEqual(["https://maps.app.goo.gl/oevsQRWjF39uYiZ79", "https://maps.app.goo.gl/oevsQRWjF39uYiZ79"]);
+  expect(hrefs).toEqual(Array(3).fill("https://maps.app.goo.gl/oevsQRWjF39uYiZ79"));
   const map = page.locator(".mapa-embed iframe");
   await expect(map).toHaveAttribute("loading", "lazy");
   await expect(map).toHaveAttribute("title", /Imprenta María Auxiliadora/);
@@ -427,12 +427,12 @@ for (const width of [1024, 1199, 1200, 1280, 1440]) {
 test.describe("hero almanac campaign scenes", () => {
   const ALMANAC_WA = "wa.me/51999759353?text=Hola%2C%20quiero%20cotizar%20almanaques%202027%20para%20mi%20negocio.";
 
-  test("four scenes, only the first visible, still one h1", async ({ page }) => {
+  test("six scenes, only the first visible, still one h1", async ({ page }) => {
     await page.goto("/");
-    await expect(page.locator("#inicio .scene")).toHaveCount(4);
+    await expect(page.locator("#inicio .scene")).toHaveCount(6);
     await expect(page.locator("h1")).toHaveCount(1);
     await expect(page.locator('#inicio .scene[data-scene="0"]')).toBeVisible();
-    for (const i of [1, 2, 3]) {
+    for (const i of [1, 2, 3, 4, 5]) {
       const s = page.locator(`#inicio .scene[data-scene="${i}"]`);
       await expect(s).toHaveAttribute("aria-hidden", "true");
       await expect(s).toHaveAttribute("inert", "");
@@ -525,23 +525,52 @@ test.describe("hero almanac campaign scenes", () => {
       await expect(hero).toHaveAttribute("data-scene", "1");
       await prev.click();
       await prev.click();
-      await expect(hero).toHaveAttribute("data-scene", "3");
+      await expect(hero).toHaveAttribute("data-scene", "5");
       const box = await next.boundingBox();
       expect(box.width).toBeGreaterThanOrEqual(44);
       expect(box.x + box.width).toBeLessThanOrEqual(width);
     }
   });
 
-  test("'Ver modelos' opens the almanac gallery with the new video", async ({ page }) => {
+  test("'Mira el catálogo' in the campaign scenes opens the 2027 catalog", async ({ page }) => {
     await page.goto("/");
     await page.getByRole("button", { name: /Ver escena 2/ }).click();
-    await page.locator('#inicio .scene[data-scene="1"] [data-gal="almanaques"]').click();
-    await expect(page.locator("#galTitle")).toHaveText("Almanaques");
-    await expect(page.locator("#galBody .gal-play")).toHaveCount(3);
+    const btn = page.locator('#inicio .scene[data-scene="1"] [data-catalogo]');
+    await expect(btn).toHaveText("Mira el catálogo");
+    await btn.click();
+    await expect(page.locator("#cat")).toBeVisible();
+    await expect(page.locator("#catCount")).toHaveText(/^Página 1 de 66$/);
+    await page.keyboard.press("Escape");
+    await expect(page.locator("#cat")).toBeHidden();
+    await expect(btn).toBeFocused();
+    // The almanac gallery is still one tap away from the services carousel
     await expect(page.locator('.svc-card[data-gal="almanaques"] small')).toHaveText("1 foto · 3 vídeos");
   });
 
-  for (const scene of [1, 2, 3]) {
+  test("after the campaign, scene 5 shows the opening hours ad and scene 6 the payment ad", async ({ page }) => {
+    await page.goto("/");
+    await page.getByRole("button", { name: "Ver escena 5: Horario" }).click();
+    const hours = page.locator('#inicio .scene[data-scene="4"]');
+    await expect(hours).toBeVisible();
+    await expect(hours).toContainText("Estamos atendiendo");
+    await expect(hours).toContainText("8:00 a.m. a 8:00 p.m.");
+    await expect(hours.locator("img")).toHaveAttribute("src", "assets/img/anuncio-horario.webp");
+    await expect(hours.getByRole("link", { name: /Cómo llegar/ })).toHaveAttribute("href", "https://maps.app.goo.gl/oevsQRWjF39uYiZ79");
+    await page.getByRole("button", { name: "Ver escena 6: Pagos" }).click();
+    const pay = page.locator('#inicio .scene[data-scene="5"]');
+    await expect(pay).toBeVisible();
+    await expect(pay).toContainText("RUC 20554569847");
+    await expect(pay.locator(".accounts dd")).toHaveText(["191-2163491-0-43", "00219100216349104350", "0011-0345-0200665607"]);
+    await expect(pay.locator("img")).toHaveAttribute("src", "assets/img/anuncio-pagos.webp");
+    for (const img of ["anuncio-horario.webp", "anuncio-pagos.webp"]) {
+      expect((await page.request.get("/assets/img/" + img)).status()).toBe(200);
+    }
+    // The last scene wraps around to the first one
+    await page.getByRole("button", { name: "Escena siguiente" }).click();
+    await expect(page.locator("#inicio")).toHaveAttribute("data-scene", "0");
+  });
+
+  for (const scene of [1, 2, 3, 4, 5]) {
     test(`scene ${scene + 1} has no serious axe violations and no horizontal scroll on mobile`, async ({ page }) => {
       await page.setViewportSize({ width: 375, height: 800 });
       await page.emulateMedia({ reducedMotion: "reduce" });
@@ -700,6 +729,240 @@ test.describe("service carousel", () => {
       await scrollAll(page);
       await page.locator(".svc-stage").scrollIntoViewIfNeeded();
       const results = await new AxeBuilder({ page }).include(".svc-stage").analyze();
+      expect(results.violations.filter(v => ["serious", "critical"].includes(v.impact)).map(v => v.id)).toEqual([]);
+    });
+  }
+});
+
+test.describe("calendar catalog 2027", () => {
+  const DESKTOP = { width: 1440, height: 900 };
+  const count = page => page.locator("#catCount");
+  const pageSrc = (n) => `assets/catalogo/pagina-${String(n).padStart(2, "0")}.webp`;
+
+  test("all 66 pages and thumbnails exist, page 1 is our own cover and the supplier's last pages are gone", async ({ page }) => {
+    for (let n = 1; n <= 66; n++) {
+      for (const f of [pageSrc(n), pageSrc(n).replace(".webp", "-mini.webp")]) {
+        const res = await page.request.get("/" + f);
+        expect(res.status(), f).toBe(200);
+      }
+    }
+    expect((await page.request.get("/assets/catalogo/pagina-67.webp")).status()).toBe(404);
+    // Our cover is 1162x1354, the supplier's pages are 1400 wide
+    await page.goto("/");
+    const widths = await page.evaluate(async srcs => Promise.all(srcs.map(s => new Promise(r => {
+      const i = new Image(); i.onload = () => r(i.naturalWidth); i.src = s;
+    }))), [pageSrc(1), pageSrc(2)]);
+    expect(widths).toEqual([1162, 1400]);
+  });
+
+  test("catalog pages are not downloaded until the viewer opens, and then only nearby pages", async ({ page }) => {
+    const requested = [];
+    page.on("request", r => { if (/\/assets\/catalogo\/pagina-\d+\.webp/.test(r.url())) requested.push(r.url()); });
+    await page.goto("/", { waitUntil: "networkidle" });
+    await scrollAll(page);
+    expect(requested).toEqual([]);
+    await page.locator("#calendarios-2027 .btn-cat").click();
+    await expect(page.locator("#cat")).toBeVisible();
+    await page.waitForLoadState("networkidle");
+    expect(requested.length).toBeGreaterThan(0);
+    expect(requested.length).toBeLessThanOrEqual(5);
+  });
+
+  test("book mode on desktop: cover alone, then two pages per spread, with arrows, keys, Home and End", async ({ page }) => {
+    await page.setViewportSize(DESKTOP);
+    await page.goto("/");
+    await page.locator("#calendarios-2027 .btn-cat").click();
+    await expect(count(page)).toHaveText("Página 1 de 66");
+    await expect(page.locator("#catPrev")).toBeDisabled();
+    await expect(page.locator(".cat-right img")).toHaveAttribute("src", pageSrc(1));
+    await page.locator("#catNext").click();
+    await expect(count(page)).toHaveText("Páginas 2 y 3 de 66");
+    await expect(page.locator(".cat-left img")).toHaveAttribute("src", pageSrc(2));
+    await expect(page.locator(".cat-right img")).toHaveAttribute("src", pageSrc(3));
+    await page.keyboard.press("ArrowRight");
+    await expect(count(page)).toHaveText("Páginas 4 y 5 de 66");
+    await page.keyboard.press("ArrowLeft");
+    await expect(count(page)).toHaveText("Páginas 2 y 3 de 66");
+    await page.keyboard.press("End");
+    await expect(count(page)).toHaveText("Página 66 de 66");
+    await expect(page.locator("#catNext")).toBeDisabled();
+    await page.keyboard.press("Home");
+    await expect(count(page)).toHaveText("Página 1 de 66");
+    await expect(page).toHaveURL(/#catalogo-1$/);
+  });
+
+  test("one page at a time on phones, turning by swipe and by tapping the page", async ({ page }) => {
+    await page.setViewportSize(MOBILE);
+    await page.goto("/");
+    await page.locator("#calendarios-2027 .btn-cat").click();
+    await expect(count(page)).toHaveText("Página 1 de 66");
+    const book = page.locator("#catBook");
+    const box = await book.boundingBox();
+    await book.dispatchEvent("pointerdown", { pointerType: "touch", clientX: box.x + box.width - 20, bubbles: true });
+    await book.dispatchEvent("pointerup", { pointerType: "touch", clientX: box.x + 20, bubbles: true });
+    await book.dispatchEvent("click", { clientX: box.x + 20, bubbles: true });
+    await expect(count(page)).toHaveText("Página 2 de 66");
+    await page.mouse.click(box.x + box.width * .8, box.y + box.height / 2);
+    await expect(count(page)).toHaveText("Página 3 de 66");
+    await page.mouse.click(box.x + box.width * .2, box.y + box.height / 2);
+    await expect(count(page)).toHaveText("Página 2 de 66");
+    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - innerWidth);
+    expect(overflow).toBeLessThanOrEqual(0);
+  });
+
+  test("index jumps to a section; WhatsApp quotes the page being viewed", async ({ page }) => {
+    await page.setViewportSize(DESKTOP);
+    await page.goto("/");
+    await page.locator("#calendarios-2027 .btn-cat").click();
+    await page.locator("#catIndexBtn").click();
+    await expect(page.locator("#catIndex")).toBeVisible();
+    await expect(page.locator("#catThumbs .cat-thumb")).toHaveCount(66);
+    await page.locator(".cat-sec", { hasText: "Imágenes 2027" }).click();
+    await expect(page.locator("#catIndex")).toBeHidden();
+    await expect(count(page)).toHaveText("Páginas 36 y 37 de 66");
+    const wa = decodeURIComponent(await page.locator("#catWa").getAttribute("href"));
+    expect(wa).toContain("wa.me/51999759353");
+    expect(wa).toContain("me interesa lo de las páginas 36 y 37.");
+  });
+
+  test("zoom shows the visible pages large and Escape steps back layer by layer", async ({ page }) => {
+    await page.setViewportSize(DESKTOP);
+    await page.goto("/#catalogo-10");
+    await expect(page.locator("#cat")).toBeVisible();
+    await expect(count(page)).toHaveText("Páginas 10 y 11 de 66");
+    await page.locator("#catZoomBtn").click();
+    await expect(page.locator("#catZoomBody img")).toHaveCount(2);
+    await expect(page.locator("#catZoomClose")).toBeFocused();
+    await page.keyboard.press("Escape");
+    await expect(page.locator("#catZoom")).toBeHidden();
+    await expect(page.locator("#cat")).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(page.locator("#cat")).toBeHidden();
+    await expect(page).not.toHaveURL(/#catalogo/);
+  });
+
+  for (const viewport of [MOBILE, DESKTOP]) {
+    test(`buttons jump straight to the cover and to the last page at ${viewport.width}px`, async ({ page }) => {
+      await page.setViewportSize(viewport);
+      await page.goto("/#catalogo-20");
+      const first = page.getByRole("button", { name: "Ir a la portada" });
+      const last = page.getByRole("button", { name: "Ir a la última página" });
+      await last.click();
+      await expect(count(page)).toHaveText("Página 66 de 66");
+      await expect(last).toBeDisabled();
+      await expect(page.locator("#catNext")).toBeDisabled();
+      await first.click();
+      await expect(count(page)).toHaveText("Página 1 de 66");
+      await expect(first).toBeDisabled();
+      await expect(last).toBeEnabled();
+      // All five controls fit on the screen without overlapping
+      const boxes = await page.$$eval(".cat-foot > *", els => els.map(e => e.getBoundingClientRect()).map(r => [r.left, r.right]));
+      expect(boxes[0][0]).toBeGreaterThanOrEqual(0);
+      expect(boxes[boxes.length - 1][1]).toBeLessThanOrEqual(viewport.width);
+      for (let i = 1; i < boxes.length; i++) expect(boxes[i][0]).toBeGreaterThanOrEqual(boxes[i - 1][1]);
+    });
+  }
+
+  test("turns pages without the flip animation when reduced motion is on", async ({ page }) => {
+    await page.setViewportSize(DESKTOP);
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await page.goto("/#catalogo-2");
+    await page.locator("#catNext").click();
+    await expect(count(page)).toHaveText("Páginas 4 y 5 de 66");
+    await expect(page.locator(".cat-leaf")).toHaveClass("cat-leaf");
+    expect(await page.evaluate(() => document.querySelector(".cat-leaf").getAnimations().length)).toBe(0);
+  });
+
+  test("shared links open the right page; the cover in the last hero scene opens the catalog", async ({ page }) => {
+    await page.goto("/#catalogo-99");
+    await expect(page.locator("#cat")).toBeVisible();
+    await page.locator("#catClose").click();
+    await page.goto("/");
+    await page.getByRole("button", { name: /Ver escena 4/ }).click();
+    await page.getByRole("button", { name: "Ábreme: catálogo de calendarios 2027" }).first().click();
+    await expect(page.locator("#cat")).toBeVisible();
+    await expect(page.locator("#catClose")).toBeFocused();
+  });
+
+  for (const viewport of [MOBILE, DESKTOP]) {
+    test(`viewer and band have no serious axe violations at ${viewport.width}px`, async ({ page }) => {
+      await page.setViewportSize(viewport);
+      await page.emulateMedia({ reducedMotion: "reduce" });
+      await page.goto("/");
+      await scrollAll(page);
+      let results = await new AxeBuilder({ page }).include("#calendarios-2027").analyze();
+      expect(results.violations.filter(v => ["serious", "critical"].includes(v.impact)).map(v => v.id)).toEqual([]);
+      await page.locator("#calendarios-2027 .btn-cat").click();
+      await page.locator("#catIndexBtn").click();
+      results = await new AxeBuilder({ page }).include("#cat").analyze();
+      expect(results.violations.filter(v => ["serious", "critical"].includes(v.impact)).map(v => v.id)).toEqual([]);
+    });
+  }
+});
+
+test.describe("catalog visibility", () => {
+  const strip = page => page.locator(".camp-strip-btn");
+  const float = page => page.locator("#catFloat");
+
+  for (const viewport of [MOBILE, { width: 1440, height: 900 }]) {
+    test(`the red campaign strip is the very first thing on the page at ${viewport.width}px and opens the catalog`, async ({ page }) => {
+      await page.setViewportSize(viewport);
+      await page.goto("/");
+      expect(await page.evaluate(() => document.body.firstElementChild.className)).toBe("camp-strip");
+      const box = await strip(page).boundingBox();
+      expect(box.y).toBe(0);
+      expect(box.height).toBeGreaterThanOrEqual(44);
+      expect(box.x + box.width).toBeLessThanOrEqual(viewport.width);
+      await expect(strip(page)).toContainText("Catálogo de calendarios 2027");
+      await strip(page).click();
+      await expect(page.locator("#cat")).toBeVisible();
+      await expect(page.locator("#catCount")).toHaveText("Página 1 de 66");
+      await page.keyboard.press("Escape");
+      await expect(strip(page)).toBeFocused();
+    });
+
+    test(`the floating mini cover shows up, opens the catalog and stays clear of WhatsApp at ${viewport.width}px`, async ({ page }) => {
+      await page.setViewportSize(viewport);
+      await page.goto("/");
+      await expect(float(page)).toBeVisible();
+      const [f, wa] = await Promise.all([float(page).boundingBox(), page.locator("a.fab").boundingBox()]);
+      expect(f.x).toBeGreaterThanOrEqual(0);
+      expect(f.x + f.width).toBeLessThan(wa.x);
+      await page.getByRole("button", { name: "Catálogo 2027: ábrelo" }).click();
+      await expect(page.locator("#cat")).toBeVisible();
+      await page.keyboard.press("Escape");
+      await expect(page.getByRole("button", { name: "Catálogo 2027: ábrelo" })).toBeFocused();
+    });
+  }
+
+  test("closing the mini cover hides it for the rest of the visit", async ({ page }) => {
+    await page.goto("/");
+    await expect(float(page)).toBeVisible();
+    await page.getByRole("button", { name: "Ocultar catálogo" }).click();
+    await expect(float(page)).toBeHidden();
+    await page.reload();
+    await expect(float(page)).toBeHidden();
+    // The strip is still there to reach the catalog
+    await expect(strip(page)).toBeVisible();
+  });
+
+  test("the mini cover steps aside while the mobile menu is open", async ({ page }) => {
+    await page.setViewportSize(MOBILE);
+    await page.goto("/");
+    await expect(float(page)).toBeVisible();
+    await page.locator("#burger").click();
+    await expect(float(page)).toHaveCSS("pointer-events", "none");
+    await page.locator("#burger").click();
+    await expect(float(page)).not.toHaveCSS("pointer-events", "none");
+  });
+
+  for (const viewport of [MOBILE, { width: 1440, height: 900 }]) {
+    test(`strip and mini cover have no serious axe violations at ${viewport.width}px`, async ({ page }) => {
+      await page.setViewportSize(viewport);
+      await page.emulateMedia({ reducedMotion: "reduce" });
+      await page.goto("/");
+      await expect(float(page)).toBeVisible();
+      const results = await new AxeBuilder({ page }).include(".camp-strip").include("#catFloat").analyze();
       expect(results.violations.filter(v => ["serious", "critical"].includes(v.impact)).map(v => v.id)).toEqual([]);
     });
   }
