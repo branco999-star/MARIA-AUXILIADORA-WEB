@@ -984,12 +984,33 @@ footer li a:hover{color:#fff}
 }
 [data-theme="dark"] .scene-arrow{background:rgba(20,27,54,.6);color:var(--tinta);border-color:rgba(143,168,255,.2)}
 [data-theme="dark"] .scene-arrow:hover{background:var(--superficie-2)}
+/* Six progress bars plus four buttons must fit on a 375px screen */
 @media (max-width:640px){
   .scene-ctl{gap:4px}
-  .scene-dot{width:30px}
+  .scene-dot{width:20px}
 }
 @media (max-width:360px){
-  .scene-dot{width:22px}
+  .scene-dot{width:16px}
+}
+
+/* Info scenes (opening hours, payments): the original ad as a framed card */
+.info-badge{background:var(--azul);color:#fff;box-shadow:0 8px 20px rgba(19,57,201,.28)}
+.ad-card{
+  border-radius:var(--r-lg);overflow:hidden;border:8px solid #fff;background:#fff;
+  box-shadow:0 10px 26px rgba(10,31,110,.14), 0 30px 70px rgba(10,31,110,.18);
+}
+.ad-card img{width:100%;height:auto}
+.ad-horario{width:min(440px,90%);margin-inline:auto;transform:rotate(2deg)}
+.ad-pagos{transform:rotate(-1.5deg)}
+.accounts{display:grid;gap:6px;margin:-12px 0 26px;padding:14px 18px;border-radius:var(--r-md);background:rgba(19,57,201,.06);max-width:440px}
+.accounts div{display:flex;flex-wrap:wrap;justify-content:space-between;gap:2px 14px}
+.accounts dt{font-size:.88rem;color:var(--gris);font-weight:600}
+.accounts dd{font-weight:800;letter-spacing:.01em;font-variant-numeric:tabular-nums;user-select:all}
+[data-theme="dark"] .ad-card{border-color:var(--superficie-2)}
+[data-theme="dark"] .accounts{background:rgba(143,168,255,.1)}
+@media (max-width:640px){
+  .ad-horario{width:min(320px,86%)}
+  .accounts{margin-top:-14px;padding:12px 14px}
 }
 
 /* ============ CATÁLOGO 2027 ============ */
