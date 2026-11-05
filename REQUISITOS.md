@@ -40,7 +40,9 @@ Web de una sola página para la Imprenta, Librería y Bazar "María Auxiliadora"
 - [x] El modo oscuro cumple contraste AA y no altera las fotos de productos
 - [x] En «Todo lo que hacemos», los servicios con material se muestran en un carrusel 3D de tarjetas (foto real, título y contador de fotos/vídeos); al tocar una tarjeta se abre su galería, usable con teclado
 - [x] El fondo del carrusel cambia de color con cada tarjeta (paleta de marca) y la tarjeta activa se balancea suavemente (inspirado en el shot "EdTech Mascot Character Animation" de Abron Studio, sin mascota)
-- [x] Encima del carrusel hay un solo botón «Toca aquí y mira todos los servicios». Al pulsarlo, los servicios salen como iconos de colores desde una casilla central sobre un fondo oscuro de cuadritos (5 columnas en escritorio, 3×3 en móvil). Al tocar un icono se cierra el panel y se salta a la tarjeta de ese servicio.
+- [x] Encima del carrusel hay un solo botón «Toca aquí y mira todos los servicios». Al pulsarlo, los 15 servicios salen como iconos de colores desde el centro del panel, sobre un fondo oscuro de cuadritos (7 columnas con la ✕ en el centro en escritorio; 4 por fila con la ✕ arriba a la derecha en móvil). Al tocar un icono se cierra el panel y se salta a la tarjeta de ese servicio.
+- [x] Nuevos servicios con galería de fotos: Impresiones y copias, Diagramación, Sellos, Serigrafía, Enmicados, Empastados y Corte y anillado (salen de la lista simple de servicios)
+- [x] En la foto del empastado se difuminan los nombres de los alumnos y la docente (datos personales); el resto de la foto no cambia
 - [x] El panel de servicios se cierra con la ✕ central, con Escape o al tocar el fondo, y el foco vuelve al botón.
 - [x] El carrusel se mueve con esos botones, flechas, teclas ← → y deslizando en móvil; avanza solo cada 3,5 s cuando está a la vista, se pausa con el ratón o el foco encima, deja de avanzar solo en cuanto el visitante lo usa y no se mueve solo con «reducir movimiento»
 - [x] La galería no descarga nada hasta que se abre una categoría (salvo las 8 miniaturas de portada del carrusel)
@@ -78,6 +80,7 @@ Origen: catálogo FlipHTML5 "CATALOGO CALENDARIO NAVARRETE 2027" (68 páginas). 
 - [x] La portada del catálogo de la escena 4 se puede pulsar y abre el catálogo
 - [x] Franja roja «Nuevo: Catálogo de calendarios 2027 · Míralo aquí» encima de todo (lo primero que se ve al entrar), que abre el catálogo
 - [x] Mini portada flotante abajo a la izquierda (WhatsApp sigue a la derecha) que abre el catálogo; se puede cerrar y no reaparece en la misma visita; se aparta con el menú móvil abierto
+- [x] En escritorio la mini portada flotante es más grande (112 px de ancho, antes 78 px); en móvil mantiene su tamaño
 - [x] El catálogo se abre en un visor a pantalla completa con efecto de pasar página (libro abierto a doble página en escritorio, una página en móvil)
 - [x] Al pasar página suena un susurro de papel generado en el navegador (sin archivos de audio); el botón «Sonido» del visor lo silencia y la elección se recuerda en las siguientes visitas
 - [x] Botones para ir directamente a la portada (|‹) y a la última página (›|)
