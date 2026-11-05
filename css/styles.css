@@ -825,7 +825,22 @@ footer li a:hover{color:#fff}
 .gal-view[hidden]{display:none}
 .gal-view{touch-action:pan-y pinch-zoom}
 /* Bigger section label for the services block */
-.eyebrow.eyebrow-lg{font-size:1.05rem;padding:11px 24px;letter-spacing:.16em}
+.eyebrow.eyebrow-lg{
+  position:relative;overflow:hidden;isolation:isolate;
+  font-size:1.05rem;padding:11px 26px 11px 22px;letter-spacing:.16em;color:#fff;
+  background:linear-gradient(100deg,#C2185B 0%,#9C27B0 55%,#7C3AED 100%);
+  box-shadow:0 4px 12px rgba(194,24,91,.32), 0 12px 28px rgba(124,58,237,.28);
+}
+/* A soft light sweeps across the label every few seconds */
+.eyebrow.eyebrow-lg::after{
+  content:'';position:absolute;inset:0;z-index:-1;
+  background:linear-gradient(100deg,transparent 30%,rgba(255,255,255,.45) 50%,transparent 70%);
+  transform:translateX(-120%);animation:eyebrowShine 4.5s ease-in-out 1s infinite;
+}
+.eyebrow.eyebrow-lg svg{animation:eyebrowTwinkle 4.5s ease-in-out 1s infinite}
+@keyframes eyebrowShine{0%{transform:translateX(-120%)}35%,100%{transform:translateX(120%)}}
+@keyframes eyebrowTwinkle{0%,100%{transform:scale(1) rotate(0)}15%{transform:scale(1.25) rotate(20deg)}30%{transform:scale(1) rotate(0)}}
+@media (prefers-reduced-motion:reduce){.eyebrow.eyebrow-lg::after,.eyebrow.eyebrow-lg svg{animation:none}}
 .gv-media{display:flex;justify-content:center;max-width:100%}
 .gv-media img,.gv-media video{
   max-width:min(1000px,100%);max-height:calc(100vh - 160px);width:auto;height:auto;
