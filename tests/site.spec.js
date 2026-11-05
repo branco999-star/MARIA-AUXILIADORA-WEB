@@ -1009,3 +1009,53 @@ test.describe("catalog visibility", () => {
     });
   }
 });
+
+test.describe("catalog page-turn sound", () => {
+  // Count the synthesised sounds by wrapping AudioBufferSourceNode.start before the page loads
+  const countSounds = page => page.addInitScript(() => {
+    window.__sounds = 0;
+    const start = AudioBufferSourceNode.prototype.start;
+    AudioBufferSourceNode.prototype.start = function () { window.__sounds++; return start.apply(this, arguments); };
+  });
+  const sounds = page => page.evaluate(() => window.__sounds);
+
+  test("turning a page plays a generated paper sound, with no audio file downloaded", async ({ page }) => {
+    await countSounds(page);
+    const audioFiles = [];
+    page.on("request", r => { if (r.resourceType() === "media" || /\.(mp3|ogg|wav|m4a)$/.test(r.url())) audioFiles.push(r.url()); });
+    await page.goto("/#catalogo-1");
+    await expect(page.locator("#cat")).toBeVisible();
+    await expect(page.locator("#catSoundBtn")).toHaveAttribute("aria-pressed", "true");
+    expect(await sounds(page)).toBe(0);
+    await page.locator("#catNext").click();
+    await expect.poll(() => sounds(page)).toBeGreaterThan(0);
+    expect(audioFiles).toEqual([]);
+  });
+
+  test("the speaker button mutes the sound and the choice is remembered", async ({ page }) => {
+    await countSounds(page);
+    await page.goto("/#catalogo-1");
+    const btn = page.getByRole("button", { name: "Sonido", exact: true });
+    await btn.click();
+    await expect(btn).toHaveAttribute("aria-pressed", "false");
+    await page.locator("#catNext").click();
+    await expect(page.locator("#catCount")).toContainText("2");
+    await page.waitForTimeout(800);
+    expect(await sounds(page)).toBe(0);
+    await page.reload();
+    await expect(page.getByRole("button", { name: "Sonido", exact: true })).toHaveAttribute("aria-pressed", "false");
+    await page.getByRole("button", { name: "Sonido", exact: true }).click();
+    await page.locator("#catNext").click();
+    await expect.poll(() => sounds(page)).toBeGreaterThan(0);
+  });
+
+  test("on mobile every viewer tool keeps a 44px touch target and the bar fits", async ({ page }) => {
+    await page.setViewportSize(MOBILE);
+    await page.goto("/#catalogo-1");
+    await expect(page.locator("#cat")).toBeVisible();
+    const sizes = await page.locator(".cat-top > button, .cat-top > a").evaluateAll(els => els.map(e => e.getBoundingClientRect().width));
+    for (const w of sizes) expect(w).toBeGreaterThanOrEqual(44);
+    await expect(page.locator("#catTitle")).toHaveText("Catálogo de calendarios 2027");
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(MOBILE.width);
+  });
+});
