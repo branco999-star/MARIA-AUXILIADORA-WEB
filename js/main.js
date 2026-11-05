@@ -367,8 +367,10 @@
   if (svc){
     var svcCards = Array.prototype.slice.call(svc.querySelectorAll('.svc-card'));
     var svcColors = svc.querySelectorAll('.svc-color');
-    var svcTabs = svc.querySelector('.svc-tabs');
-    var svcDots = svcTabs.querySelectorAll('.svc-dot');
+    var svcDots = svc.querySelectorAll('.svc-dot');
+    var svcOpenBtn = svc.querySelector('.svc-open');
+    var svcPanel = svc.querySelector('.svc-panel');
+    var svcCloseBtn = svc.querySelector('.svc-close');
     var SVC_MS = 3500, svcIdx = 0, svcTimer = null, svcHover = false, svcFocus = false, svcSeen = false;
     // Once the visitor picks or moves a card, autoplay stops for good so they can look calmly
     var svcStopped = false;
@@ -392,16 +394,11 @@
         if (k === svcIdx) svcDots[k].setAttribute('aria-current', 'true');
         else svcDots[k].removeAttribute('aria-current');
       }
-      // Keep the current pill in view when the pill row scrolls sideways (mobile), without moving the page
-      if (svcTabs.scrollWidth > svcTabs.clientWidth){
-        var pill = svcDots[svcIdx];
-        svcTabs.scrollTo({left: pill.offsetLeft - (svcTabs.clientWidth - pill.offsetWidth) / 2, behavior: reduceMotion ? 'auto' : 'smooth'});
-      }
     };
     var svcPlay = function(){
       clearInterval(svcTimer);
       svcTimer = null;
-      if (svcStopped || reduceMotion || svcHover || svcFocus || !svcSeen || document.hidden) return;
+      if (svcStopped || reduceMotion || svcHover || svcFocus || !svcSeen || document.hidden || !svcPanel.hidden) return;
       svcTimer = setInterval(function(){ svcGo(svcIdx + 1); }, SVC_MS);
     };
     var svcUser = function(i){
@@ -413,12 +410,71 @@
     svcCards.forEach(function(c, k){
       c.addEventListener('click', function(){ svcUser(k); });
     });
+    // "All services" panel: the icons spring out of the centre tile, like apps opening from a folder
+    var svcEase = 'cubic-bezier(.34,1.56,.64,1)';
+    var svcFromCentre = function(el){
+      var c = svcCloseBtn.getBoundingClientRect(), r = el.getBoundingClientRect();
+      var dx = (c.left + c.width / 2) - (r.left + r.width / 2);
+      var dy = (c.top + c.height / 2) - (r.top + r.height / 2);
+      return 'translate(' + dx + 'px,' + dy + 'px) scale(.3)';
+    };
+    var svcShow = function(){
+      if (svcPanel.getAnimations) svcPanel.getAnimations({subtree: true}).forEach(function(a){ a.cancel(); });
+      svcPanel.hidden = false;
+      svcOpenBtn.setAttribute('aria-expanded', 'true');
+      svcPlay();
+      if (!reduceMotion && svcPanel.animate){
+        svcPanel.animate([{opacity: 0}, {opacity: 1}], {duration: 220, easing: 'ease-out'});
+        svcCloseBtn.animate([{transform: 'scale(.5)'}, {transform: 'none'}], {duration: 420, easing: svcEase});
+        Array.prototype.forEach.call(svcDots, function(d, k){
+          d.animate([{transform: svcFromCentre(d), opacity: 0}, {transform: 'none', opacity: 1}],
+            {duration: 560, delay: 60 + k * 40, easing: svcEase, fill: 'backwards'});
+        });
+      }
+      svcDots[svcIdx].focus();
+    };
+    var svcHide = function(focusEl){
+      if (svcPanel.hidden || svcOpenBtn.getAttribute('aria-expanded') === 'false') return;
+      svcOpenBtn.setAttribute('aria-expanded', 'false');
+      var done = function(){
+        // Reopened while the closing animation ran: leave it open
+        if (svcOpenBtn.getAttribute('aria-expanded') === 'true') return;
+        svcPanel.hidden = true;
+        svcPlay();
+      };
+      if (focusEl) focusEl.focus({preventScroll: true});
+      if (reduceMotion || !svcPanel.animate){ done(); return; }
+      Array.prototype.forEach.call(svcDots, function(d){
+        d.animate([{transform: 'none', opacity: 1}, {transform: svcFromCentre(d), opacity: 0}],
+          {duration: 260, easing: 'ease-in', fill: 'forwards'});
+      });
+      svcPanel.animate([{opacity: 1}, {opacity: 0}], {duration: 300, easing: 'ease-in', fill: 'forwards'}).onfinish = function(){
+        svcPanel.getAnimations({subtree: true}).forEach(function(a){ a.cancel(); });
+        done();
+      };
+    };
+    svcOpenBtn.addEventListener('click', svcShow);
+    svcCloseBtn.addEventListener('click', function(){ svcHide(svcOpenBtn); });
+    // A tap on the empty tiles closes the panel too
+    svcPanel.addEventListener('click', function(e){ if (e.target === svcPanel) svcHide(svcOpenBtn); });
+    // Tabbing out of the panel closes it, so focus never lands on controls hidden underneath
+    svcPanel.addEventListener('focusout', function(e){
+      if (e.relatedTarget && !svcPanel.contains(e.relatedTarget)) svcHide(null);
+    });
+
     Array.prototype.forEach.call(svcDots, function(d, k){
-      d.addEventListener('click', function(){ svcUser(k); });
+      d.addEventListener('click', function(){
+        svcUser(k);
+        svcHide(svcCards[k]);
+      });
     });
     svc.querySelector('.svc-prev').addEventListener('click', function(){ svcUser(svcIdx - 1); });
     svc.querySelector('.svc-next').addEventListener('click', function(){ svcUser(svcIdx + 1); });
     svc.addEventListener('keydown', function(e){
+      if (!svcPanel.hidden){
+        if (e.key === 'Escape'){ e.preventDefault(); svcHide(svcOpenBtn); }
+        return;
+      }
       if (e.key === 'ArrowLeft'){ e.preventDefault(); svcUser(svcIdx - 1); }
       if (e.key === 'ArrowRight'){ e.preventDefault(); svcUser(svcIdx + 1); }
     });
