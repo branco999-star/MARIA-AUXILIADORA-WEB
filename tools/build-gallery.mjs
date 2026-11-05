@@ -215,6 +215,8 @@ const EXTRAS = {
   "imagenes-de-santos": [["imagenes-de-santos.webp", "Imágenes religiosas de distintos tamaños"]],
   "cirios-velas-y-velones": [["cirios-velas-y-velones.webp", "Cirios, velones y velas decoradas"]],
 };
+// In these galleries the catalog photos go first (they show the product better than blurred client photos)
+const EXTRAS_FIRST = ["diplomas"];
 const withExtras = list => list.map(cat => {
   const add = (EXTRAS[cat.id] || []).map(([file, alt]) => {
     const src = `assets/img/${file}`;
@@ -222,7 +224,7 @@ const withExtras = list => list.map(cat => {
     return { type: "image", src, thumb: src, w, h, alt };
   });
   const own = cat.items.filter(it => !it.src.startsWith("assets/img/"));
-  return { ...cat, items: [...own, ...add] };
+  return { ...cat, items: EXTRAS_FIRST.includes(cat.id) ? [...add, ...own] : [...own, ...add] };
 });
 const EXTRAS_ONLY = process.argv[2] === "--extras";
 const ONLY = EXTRAS_ONLY ? [] : process.argv.slice(2);

@@ -425,7 +425,8 @@ test.describe("category galleries", () => {
     await page.goto("/", { waitUntil: "networkidle" });
     const covers = await page.$$eval(".svc-card img", imgs => imgs.map(i => i.getAttribute("src")));
     expect(covers).toHaveLength(27);
-    expect(covers.every(c => /-mini\.webp$/.test(c))).toBe(true);
+    // Covers are light thumbnails, or catalog photos already shown elsewhere on the page
+    expect(covers.every(c => /-mini\.webp$/.test(c) || /^assets\/img\/cuadro-/.test(c))).toBe(true);
     expect(requested.filter(u => !covers.includes(u))).toEqual([]);
   });
 
