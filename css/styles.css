@@ -1141,6 +1141,7 @@ button.cat-peek:focus-visible{outline-offset:6px}
 .cat-top{display:flex;align-items:center;gap:10px;padding:12px 16px;min-height:68px}
 .cat-title{font-size:1.15rem;margin-right:auto;letter-spacing:-.01em}
 .cat-title span{color:var(--amarillo)}
+.cat-title-long{font-style:normal}
 .cat-tool{
   display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 16px;border-radius:999px;
   background:rgba(255,255,255,.1);color:#fff;font-weight:700;font-size:.92rem;
@@ -1253,7 +1254,10 @@ button.cat-peek:focus-visible{outline-offset:6px}
 }
 @media (max-width:640px){
   .cat-tool span,.cat-wa span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
-  .cat-tool,.cat-wa{width:44px;padding:0;justify-content:center}
+  .cat-tool,.cat-wa{width:44px;flex:none;padding:0;justify-content:center}
+  .cat-close{flex:none}
+  .cat-title{min-width:0}
+  .cat-title-long{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
   .cat-title{font-size:1rem}
   .cat-top{gap:8px;padding:10px 12px}
   .cat-foot{gap:8px;padding-inline:8px}
@@ -1338,3 +1342,7 @@ button.cat-peek:focus-visible{outline-offset:6px}
 @media print{
   .camp-strip,.cat-float{display:none!important}
 }
+/* Catalog page-turn sound toggle */
+.cat-sound .snd-off,.cat-sound.is-off .snd-on{display:none}
+.cat-sound.is-off .snd-off{display:block}
+.cat-sound.is-off{opacity:.75}

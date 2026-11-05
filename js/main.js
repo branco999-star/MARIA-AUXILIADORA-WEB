@@ -596,15 +596,102 @@
       catSet(catRight, p[1]);
       catUpdateUi();
     };
+    // Page-turn sound, synthesised on the fly (no audio file): a filtered paper rustle plus a soft flap as the page lands
+    var CAT_SOUND_KEY = 'catSound';
+    var catSoundBtn = document.getElementById('catSoundBtn');
+    var catAudio = null, catNoise = null;
+    var catSoundOn = true;
+    try { catSoundOn = localStorage.getItem(CAT_SOUND_KEY) !== 'off'; } catch (e) {}
+    var catSoundUi = function(){
+      catSoundBtn.setAttribute('aria-pressed', catSoundOn ? 'true' : 'false');
+      catSoundBtn.classList.toggle('is-off', !catSoundOn);
+    };
+    catSoundUi();
+    catSoundBtn.addEventListener('click', function(){
+      catSoundOn = !catSoundOn;
+      try { localStorage.setItem(CAT_SOUND_KEY, catSoundOn ? 'on' : 'off'); } catch (e) {}
+      catSoundUi();
+    });
+    // Created and resumed inside the visitor's click or key press: Safari only allows audio from a direct gesture
+    var catAudioWake = function(){
+      if (!catSoundOn) return;
+      var AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return;
+      try {
+        if (!catAudio){
+          catAudio = new AC();
+          // One second of white noise, reused by every turn
+          catNoise = catAudio.createBuffer(1, catAudio.sampleRate, catAudio.sampleRate);
+          var data = catNoise.getChannelData(0);
+          for (var i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
+        }
+        if (catAudio.state === 'suspended') catAudio.resume();
+      } catch (e) {}
+    };
+    var catPlaySound = function(ms){
+      if (!catSoundOn || !catAudio) return;
+      try {
+        var ctx = catAudio, t = ctx.currentTime + .01, d = Math.max(.32, ms / 1000 * .8);
+        var out = ctx.createGain();
+        out.gain.value = .5;
+        out.connect(ctx.destination);
+
+        // Rustle: band-passed noise whose pitch rises as the sheet sweeps over, with small random crinkles
+        var src = ctx.createBufferSource();
+        src.buffer = catNoise;
+        src.playbackRate.value = .9 + Math.random() * .2;
+        var hp = ctx.createBiquadFilter();
+        hp.type = 'highpass';
+        hp.frequency.value = 500;
+        var bp = ctx.createBiquadFilter();
+        bp.type = 'bandpass';
+        bp.Q.value = .7;
+        bp.frequency.setValueAtTime(1200, t);
+        bp.frequency.exponentialRampToValueAtTime(3800, t + d * .7);
+        bp.frequency.exponentialRampToValueAtTime(2000, t + d);
+        var env = ctx.createGain();
+        env.gain.setValueAtTime(0, t);
+        env.gain.linearRampToValueAtTime(.12, t + .05);
+        for (var k = 1; k <= 5; k++){
+          env.gain.linearRampToValueAtTime(.1 + Math.random() * .14, t + d * (.12 + k * .1));
+        }
+        env.gain.linearRampToValueAtTime(.2, t + d * .8);
+        env.gain.exponentialRampToValueAtTime(.001, t + d);
+        src.connect(hp);
+        hp.connect(bp);
+        bp.connect(env);
+        env.connect(out);
+        src.start(t, Math.random() * .4, d + .05);
+
+        // Flap: a short, dull puff of air when the page settles
+        var flap = ctx.createBufferSource();
+        flap.buffer = catNoise;
+        var lp = ctx.createBiquadFilter();
+        lp.type = 'lowpass';
+        lp.frequency.value = 700;
+        var fe = ctx.createGain();
+        var tf = t + d * .82;
+        fe.gain.setValueAtTime(0, tf);
+        fe.gain.linearRampToValueAtTime(.55, tf + .012);
+        fe.gain.exponentialRampToValueAtTime(.001, tf + .12);
+        flap.connect(lp);
+        lp.connect(fe);
+        fe.connect(out);
+        flap.start(tf, Math.random() * .5, .14);
+      } catch (e) {}
+    };
+
     var catGo = function(n){
       n = Math.max(1, Math.min(CAT_N, n));
       var from = catPair(catPage), to = catPair(n);
       if (from[0] === to[0] && from[1] === to[1]) return;
       if (catAnim) catAnim.finish();
+      catAudioWake();
       var fwd = (to[1] || to[0]) > (from[1] || from[0]);
       Promise.all([catLoad(to[0]), catLoad(to[1])]).then(function(){
-        if (reduceMotion){ catShow(n); return; }
         var spread = catSpread(), opts = { duration: spread ? 700 : 520, easing: 'cubic-bezier(.45,.05,.25,1)' };
+        catPlaySound(reduceMotion ? 400 : opts.duration);
+        if (reduceMotion){ catShow(n); return; }
         catLeaf.className = 'cat-leaf ' + (spread ? (fwd ? 'on-right' : 'on-left') : 'on-single');
         if (spread){
           // The leaf carries the page being turned: its front is the old page, its back the new one
