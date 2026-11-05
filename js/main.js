@@ -410,10 +410,10 @@
     svcCards.forEach(function(c, k){
       c.addEventListener('click', function(){ svcUser(k); });
     });
-    // "All services" panel: the icons spring out of the centre tile, like apps opening from a folder
+    // "All services" panel: the icons spring out of the middle of the panel, like apps opening from a folder
     var svcEase = 'cubic-bezier(.34,1.56,.64,1)';
     var svcFromCentre = function(el){
-      var c = svcCloseBtn.getBoundingClientRect(), r = el.getBoundingClientRect();
+      var c = svcPanel.getBoundingClientRect(), r = el.getBoundingClientRect();
       var dx = (c.left + c.width / 2) - (r.left + r.width / 2);
       var dy = (c.top + c.height / 2) - (r.top + r.height / 2);
       return 'translate(' + dx + 'px,' + dy + 'px) scale(.3)';
