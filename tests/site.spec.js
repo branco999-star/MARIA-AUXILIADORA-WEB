@@ -195,7 +195,7 @@ test("images have alt, size attributes, WebP and lazy loading below the fold", a
   const imgs = await page.$$eval("main img, nav img, footer img", els => els.map(i => ({
     src: i.getAttribute("src"), alt: i.getAttribute("alt"), w: i.getAttribute("width"), h: i.getAttribute("height"), lazy: i.getAttribute("loading"),
   })));
-  expect(imgs.length).toBe(52);
+  expect(imgs.length).toBe(54);
   for (const i of imgs) {
     expect(i.alt, i.src).not.toBeNull();
     expect(i.w && i.h, i.src).toBeTruthy();
@@ -302,7 +302,7 @@ test("footer legal line uses the full width", async ({ page }) => {
 test("Google Maps links and embedded map point to the store", async ({ page }) => {
   await page.goto("/");
   const hrefs = await page.$$eval('a[href*="maps.app.goo.gl"]', as => as.map(a => a.href));
-  expect(hrefs).toEqual(["https://maps.app.goo.gl/oevsQRWjF39uYiZ79", "https://maps.app.goo.gl/oevsQRWjF39uYiZ79"]);
+  expect(hrefs).toEqual(Array(3).fill("https://maps.app.goo.gl/oevsQRWjF39uYiZ79"));
   const map = page.locator(".mapa-embed iframe");
   await expect(map).toHaveAttribute("loading", "lazy");
   await expect(map).toHaveAttribute("title", /Imprenta María Auxiliadora/);
@@ -427,12 +427,12 @@ for (const width of [1024, 1199, 1200, 1280, 1440]) {
 test.describe("hero almanac campaign scenes", () => {
   const ALMANAC_WA = "wa.me/51999759353?text=Hola%2C%20quiero%20cotizar%20almanaques%202027%20para%20mi%20negocio.";
 
-  test("four scenes, only the first visible, still one h1", async ({ page }) => {
+  test("six scenes, only the first visible, still one h1", async ({ page }) => {
     await page.goto("/");
-    await expect(page.locator("#inicio .scene")).toHaveCount(4);
+    await expect(page.locator("#inicio .scene")).toHaveCount(6);
     await expect(page.locator("h1")).toHaveCount(1);
     await expect(page.locator('#inicio .scene[data-scene="0"]')).toBeVisible();
-    for (const i of [1, 2, 3]) {
+    for (const i of [1, 2, 3, 4, 5]) {
       const s = page.locator(`#inicio .scene[data-scene="${i}"]`);
       await expect(s).toHaveAttribute("aria-hidden", "true");
       await expect(s).toHaveAttribute("inert", "");
@@ -525,7 +525,7 @@ test.describe("hero almanac campaign scenes", () => {
       await expect(hero).toHaveAttribute("data-scene", "1");
       await prev.click();
       await prev.click();
-      await expect(hero).toHaveAttribute("data-scene", "3");
+      await expect(hero).toHaveAttribute("data-scene", "5");
       const box = await next.boundingBox();
       expect(box.width).toBeGreaterThanOrEqual(44);
       expect(box.x + box.width).toBeLessThanOrEqual(width);
@@ -547,7 +547,30 @@ test.describe("hero almanac campaign scenes", () => {
     await expect(page.locator('.svc-card[data-gal="almanaques"] small')).toHaveText("1 foto · 3 vídeos");
   });
 
-  for (const scene of [1, 2, 3]) {
+  test("after the campaign, scene 5 shows the opening hours ad and scene 6 the payment ad", async ({ page }) => {
+    await page.goto("/");
+    await page.getByRole("button", { name: "Ver escena 5: Horario" }).click();
+    const hours = page.locator('#inicio .scene[data-scene="4"]');
+    await expect(hours).toBeVisible();
+    await expect(hours).toContainText("Estamos atendiendo");
+    await expect(hours).toContainText("8:00 a.m. a 8:00 p.m.");
+    await expect(hours.locator("img")).toHaveAttribute("src", "assets/img/anuncio-horario.webp");
+    await expect(hours.getByRole("link", { name: /Cómo llegar/ })).toHaveAttribute("href", "https://maps.app.goo.gl/oevsQRWjF39uYiZ79");
+    await page.getByRole("button", { name: "Ver escena 6: Pagos" }).click();
+    const pay = page.locator('#inicio .scene[data-scene="5"]');
+    await expect(pay).toBeVisible();
+    await expect(pay).toContainText("RUC 20554569847");
+    await expect(pay.locator(".accounts dd")).toHaveText(["191-2163491-0-43", "00219100216349104350", "0011-0345-0200665607"]);
+    await expect(pay.locator("img")).toHaveAttribute("src", "assets/img/anuncio-pagos.webp");
+    for (const img of ["anuncio-horario.webp", "anuncio-pagos.webp"]) {
+      expect((await page.request.get("/assets/img/" + img)).status()).toBe(200);
+    }
+    // The last scene wraps around to the first one
+    await page.getByRole("button", { name: "Escena siguiente" }).click();
+    await expect(page.locator("#inicio")).toHaveAttribute("data-scene", "0");
+  });
+
+  for (const scene of [1, 2, 3, 4, 5]) {
     test(`scene ${scene + 1} has no serious axe violations and no horizontal scroll on mobile`, async ({ page }) => {
       await page.setViewportSize({ width: 375, height: 800 });
       await page.emulateMedia({ reducedMotion: "reduce" });

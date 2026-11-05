@@ -58,7 +58,10 @@ Web de una sola página para la Imprenta, Librería y Bazar "María Auxiliadora"
 - [x] Consola sin errores y sin recursos 404
 
 ### Campaña Almanaques 2027 (portada)
-- [x] La portada cambia sola cada 15 segundos entre 4 escenas (fachada → 3 vídeos de almanaques), cada vez con más presencia de la campaña
+- [x] La portada cambia sola cada 15 segundos entre 6 escenas: fachada → 3 vídeos de almanaques (cada vez con más presencia de la campaña) → horario de atención → pagos y datos de la empresa
+- [x] Escena 5, anuncio «Estamos atendiendo»: lunes a sábado de 8:00 a.m. a 8:00 p.m., botones «Escríbenos» (WhatsApp) y «Cómo llegar» (Google Maps)
+- [x] Escena 6, anuncio de pagos: Yape, Plin, BCP y BBVA, MAYOR GRAF S.A.C. con RUC, y las cuentas (BCP, CCI y BBVA) en texto que se puede copiar
+- [x] Los anuncios salen de la carpeta «PORTADA-PAGINA DE INICIO» (PDF originales sin tocar, excluidos de git); se convirtieron a WebP sin metadatos en assets/img/
 - [x] Los vídeos se ven en una tarjeta vertical tipo móvil y solo se descargan cuando les toca
 - [x] Los vídeos tienen sonido: empiezan silenciados (los navegadores no permiten reproducir sonido automáticamente) y el botón de altavoz o la burbuja «Toca para escuchar» lo activan para toda la visita
 - [x] Los vídeos de las galerías también tienen sonido (salvo el de Bolsas kraft, que no tiene audio en el original)
