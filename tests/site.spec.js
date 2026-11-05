@@ -309,11 +309,18 @@ test("Google Maps links and embedded map point to the store", async ({ page }) =
   expect(decodeURIComponent(await map.getAttribute("src"))).toContain("Imprenta+\"Maria+Auxiliadora\",+Prol.+28+de+Julio,+Lurigancho-Chosica+15468");
 });
 
-// Bring a service card to the centre of the carousel (via its dot, which also pauses autoplay) and open its gallery
+// Pick a service in the "all services" panel (which also pauses autoplay)
+async function pickService(page, title) {
+  await page.locator(".svc-open").click();
+  await page.locator(".svc-tabs").getByRole("button", { name: title, exact: true }).click();
+  await expect(page.locator(".svc-panel")).toBeHidden();
+}
+
+// Bring a service card to the centre of the carousel and open its gallery
 async function openService(page, id) {
   const card = page.locator(`.svc-card[data-gal="${id}"]`);
   const title = await card.getAttribute("data-title");
-  await page.locator(".svc-tabs").getByRole("button", { name: title, exact: true }).click();
+  await pickService(page, title);
   await expect(card).toHaveClass(/\bon\b/);
   await card.click();
   return card;
@@ -621,44 +628,76 @@ test.describe("service carousel", () => {
   const pill = (page, name) => page.locator(".svc-tabs").getByRole("button", { name, exact: true });
   const PILLS = ["Almanaques", "Bolsas kraft", "Cajas con tu logo", "Cirios, velas y velones", "Llaveros y souvenirs", "Invitaciones", "Cuadros de promoción", "Diseño gráfico"];
 
-  test("named pills list every service and jump straight to its card without opening the gallery", async ({ page }) => {
+  test("a single button opens every service as icons; picking one jumps to its card without opening the gallery", async ({ page }) => {
     await page.goto("/");
     await page.locator(".svc-stage").scrollIntoViewIfNeeded();
+    const open = page.getByRole("button", { name: /todos los servicios/ });
+    await expect(open).toHaveAttribute("aria-expanded", "false");
+    await expect(page.locator(".svc-panel")).toBeHidden();
+    await open.click();
+    await expect(open).toHaveAttribute("aria-expanded", "true");
     await expect(page.locator(".svc-tabs .svc-dot")).toHaveText(PILLS);
+    await expect(page.locator(".svc-tabs .svc-dot .svc-app svg")).toHaveCount(8);
     const order = await page.$$eval(".svc-card", els => els.map(e => e.dataset.title));
     expect(order).toEqual(PILLS);
     await pill(page, "Invitaciones").click();
+    await expect(page.locator(".svc-panel")).toBeHidden();
+    await expect(open).toHaveAttribute("aria-expanded", "false");
     await expect(active(page)).toHaveAttribute("data-gal", "invitaciones");
-    await expect(pill(page, "Invitaciones")).toHaveAttribute("aria-current", "true");
+    await expect(active(page)).toBeFocused();
+    await expect(page.locator(".svc-dot", { hasText: "Invitaciones" })).toHaveAttribute("aria-current", "true");
     await expect(page.locator(".svc-tabs [aria-current]")).toHaveCount(1);
     await expect(page.locator("#gal")).toBeHidden();
+  });
+
+  test("the services panel closes with its centre button, Escape or tabbing out, and focus returns to the launcher", async ({ page }) => {
+    await page.goto("/");
+    await page.locator(".svc-stage").scrollIntoViewIfNeeded();
+    const open = page.locator(".svc-open");
+    await open.click();
+    await expect(pill(page, "Almanaques")).toBeFocused();
+    await page.getByRole("button", { name: "Cerrar la lista de servicios" }).click();
+    await expect(page.locator(".svc-panel")).toBeHidden();
+    await expect(open).toBeFocused();
+    await open.press("Enter");
+    await expect(page.locator(".svc-panel")).toBeVisible();
+    await page.keyboard.press("ArrowRight");
+    await expect(active(page)).toHaveAttribute("data-gal", "almanaques");
+    await page.keyboard.press("Escape");
+    await expect(page.locator(".svc-panel")).toBeHidden();
+    await expect(open).toBeFocused();
+    await open.press("Enter");
+    await page.keyboard.press("Shift+Tab");
+    await expect(page.locator(".svc-panel")).toBeHidden();
+  });
+
+  test("on mobile the services panel shows a 3×3 grid that fits inside the stage", async ({ page }) => {
+    await page.setViewportSize(MOBILE);
+    await page.goto("/");
+    await page.locator(".svc-stage").scrollIntoViewIfNeeded();
+    await page.locator(".svc-open").click();
+    await page.waitForFunction(() => document.querySelector(".svc-panel").getAnimations({ subtree: true }).length === 0);
+    const stage = await page.locator(".svc-stage").boundingBox();
+    const boxes = await page.locator(".svc-tabs > button").evaluateAll(els => els.map(e => e.getBoundingClientRect().toJSON()));
+    expect(boxes).toHaveLength(9);
+    for (const b of boxes) {
+      expect(b.left).toBeGreaterThanOrEqual(stage.x);
+      expect(b.right).toBeLessThanOrEqual(stage.x + stage.width);
+      expect(b.width).toBeGreaterThanOrEqual(44);
+      expect(b.height).toBeGreaterThanOrEqual(44);
+    }
+    expect(new Set(boxes.slice(0, 8).map(b => Math.round(b.top))).size).toBe(3);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(MOBILE.width);
   });
 
   test("autoplay stops for good once the visitor picks a service", async ({ page }) => {
     await page.goto("/");
     await page.locator(".svc-stage").scrollIntoViewIfNeeded();
-    await pill(page, "Cajas con tu logo").click();
+    await pickService(page, "Cajas con tu logo");
     await page.mouse.move(1, 1);
     await page.locator("body").evaluate(() => document.activeElement.blur());
     await page.waitForTimeout(4500);
     await expect(active(page)).toHaveAttribute("data-gal", "cajas-con-tu-logo");
-  });
-
-  test("on mobile the pill row scrolls inside the stage and keeps the current pill visible", async ({ page }) => {
-    await page.setViewportSize(MOBILE);
-    await page.goto("/");
-    await page.locator(".svc-stage").scrollIntoViewIfNeeded();
-    const [scrollW, clientW] = await page.locator(".svc-tabs").evaluate(e => [e.scrollWidth, e.clientWidth]);
-    expect(scrollW).toBeGreaterThan(clientW);
-    await page.getByRole("button", { name: "Servicio anterior" }).click();
-    await expect(active(page)).toHaveAttribute("data-gal", "diseno-grafico");
-    const last = pill(page, "Diseño gráfico");
-    await expect(async () => {
-      const [p, t] = await Promise.all([last.boundingBox(), page.locator(".svc-tabs").boundingBox()]);
-      expect(p.x).toBeGreaterThanOrEqual(t.x - 1);
-      expect(p.x + p.width).toBeLessThanOrEqual(t.x + t.width + 1);
-    }).toPass();
-    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(MOBILE.width);
   });
 
   test("arrows, keys and dots move the deck, the stage colour and the current dot", async ({ page }) => {
@@ -670,12 +709,12 @@ test.describe("service carousel", () => {
     await page.getByRole("button", { name: "Servicio siguiente" }).click();
     await expect(active(page)).toHaveAttribute("data-gal", "bolsas-kraft");
     expect(await activeColor(page)).toBe(1);
-    await expect(pill(page, "Bolsas kraft")).toHaveAttribute("aria-current", "true");
+    await expect(page.locator(".svc-dot", { hasText: "Bolsas kraft" })).toHaveAttribute("aria-current", "true");
     await page.keyboard.press("ArrowRight");
     await expect(active(page)).toHaveAttribute("data-gal", "cajas-con-tu-logo");
     await page.keyboard.press("ArrowLeft");
     await expect(active(page)).toHaveAttribute("data-gal", "bolsas-kraft");
-    await pill(page, "Cuadros de promoción").click();
+    await pickService(page, "Cuadros de promoción");
     await expect(active(page)).toHaveAttribute("data-gal", "cuadros-de-promocion");
     expect(await activeColor(page)).toBe(6);
     await page.getByRole("button", { name: "Servicio siguiente" }).click();
@@ -730,6 +769,9 @@ test.describe("service carousel", () => {
       await page.locator(".svc-stage").scrollIntoViewIfNeeded();
       const results = await new AxeBuilder({ page }).include(".svc-stage").analyze();
       expect(results.violations.filter(v => ["serious", "critical"].includes(v.impact)).map(v => v.id)).toEqual([]);
+      await page.locator(".svc-open").click();
+      const open = await new AxeBuilder({ page }).include(".svc-stage").analyze();
+      expect(open.violations.filter(v => ["serious", "critical"].includes(v.impact)).map(v => v.id)).toEqual([]);
     });
   }
 });
