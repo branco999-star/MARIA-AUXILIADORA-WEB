@@ -344,6 +344,8 @@ section{padding:88px 0}
 /* 7-column board: the close tile sits in the middle (two rows tall) and the services fill every other cell */
 .svc-tabs{display:grid;grid-template-columns:repeat(7,minmax(0,120px));grid-auto-flow:row dense;gap:12px 16px;justify-items:center;align-items:start;width:100%;justify-content:center}
 .svc-tabs > .svc-close{grid-area:2/4/4/5;align-self:center}
+/* A lone service on the last row sits centred under the close tile */
+.svc-tabs > .svc-dot:nth-child(7n+6):nth-last-child(2){grid-column:4}
 .svc-dot,.svc-close{
   display:flex;flex-direction:column;align-items:center;gap:8px;width:100%;min-height:44px;padding:6px 4px;
   border:0;border-radius:18px;background:none;font:inherit;font-size:.86rem;font-weight:700;line-height:1.25;
