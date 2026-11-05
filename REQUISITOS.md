@@ -48,7 +48,9 @@ Web de una sola página para la Imprenta, Librería y Bazar "María Auxiliadora"
 - [x] Servicios con fotos genéricas de dominio público (CC0, fuentes en tools/genericas-fuentes.json): Sobres y folders, Agendas, Libros contables, Cintas de embalaje y film, Escaneos y Tipeos; Creación de páginas web usa capturas de esta web
 - [x] Diplomas: un diploma por plantilla (5), con caras, nombres, fotos de grupo y listas de alumnos difuminadas. Ya no queda lista simple de servicios: los 27 tienen galería
 - [x] En el móvil, las fotos de cada servicio se pasan deslizando el dedo a izquierda o derecha (también siguen las flechas)
-- [x] La etiqueta «Servicios» es más grande que las de las demás secciones
+- [x] La etiqueta «Servicios» es más grande que las de las demás secciones y más llamativa (degradado fucsia-morado, estrella y brillo)
+- [x] Las galerías de Diplomas (6 cuadros), Copas personalizadas (2), Imágenes de santos (1) y Cirios, velas y velones (1) suman fotos del catálogo de la propia web
+- [x] El contador de fotos y vídeos de cada tarjeta coincide con su galería
 - [x] El panel de servicios se cierra con la ✕ central, con Escape o al tocar el fondo, y el foco vuelve al botón.
 - [x] El carrusel se mueve con esos botones, flechas, teclas ← → y deslizando en móvil; avanza solo cada 3,5 s cuando está a la vista, se pausa con el ratón o el foco encima, deja de avanzar solo en cuanto el visitante lo usa y no se mueve solo con «reducir movimiento»
 - [x] La galería no descarga nada hasta que se abre una categoría (salvo las 8 miniaturas de portada del carrusel)

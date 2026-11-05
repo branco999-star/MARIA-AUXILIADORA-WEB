@@ -1,5 +1,6 @@
 // Usage: FFMPEG=<path to ffmpeg.exe> node tools/build-gallery.mjs [category id ...]
 // With category ids, only those galleries are rebuilt and merged into the existing galeria.json.
+// With --extras, nothing is rebuilt: only the EXTRAS (catalog photos already on the site) are re-applied.
 // Needs the local server running (npm run serve) to render PDF pages with pdf.js in Chromium.
 // Reads the original material folders (never modified) and writes web-ready copies to assets/galeria/:
 //   photos -> WebP (no metadata), videos -> 480px H.264 + AAC audio + WebP poster,
@@ -197,8 +198,35 @@ const CATEGORIES = [
     "h": 320}],
   } },
 ];
-const ONLY = process.argv.slice(2);
-const todo = ONLY.length ? CATEGORIES.filter(c => ONLY.includes(c.id)) : CATEGORIES;
+// Catalog photos already published elsewhere on the page (assets/img/), added at the end of a gallery
+const EXTRAS = {
+  "diplomas": [
+    ["cuadro-mi-dulce-princesa-super-biomadera-3d.webp", "Cuadro de promoción «Mi Dulce Princesa», línea Súper Biomadera 3D"],
+    ["cuadro-heroe-galaxy-super-biomadera-3d.webp", "Cuadro de promoción «Héroe Galaxy», línea Súper Biomadera 3D"],
+    ["cuadro-mi-principe-roblox-super-biomadera-3d.webp", "Cuadro de promoción «Mi Príncipe Roblox», línea Súper Biomadera 3D"],
+    ["cuadro-mi-princesa-kpop-super-biomadera-3d.webp", "Cuadro de promoción «Mi Princesa KPOP», línea Súper Biomadera 3D"],
+    ["cuadro-piedra-sinterizada-azul-elegancia.webp", "Cuadro de promoción en piedra sinterizada azul, línea Elegancia"],
+    ["cuadro-piedra-sinterizada-rosada-elegancia.webp", "Cuadro de promoción en piedra sinterizada rosada, línea Elegancia"],
+  ],
+  "copas-personalizadas": [
+    ["copas-personalizadas.webp", "Copas grabadas con los nombres de los novios"],
+    ["copas-de-regalo.webp", "Copas de regalo grabadas con nombre y dedicatoria"],
+  ],
+  "imagenes-de-santos": [["imagenes-de-santos.webp", "Imágenes religiosas de distintos tamaños"]],
+  "cirios-velas-y-velones": [["cirios-velas-y-velones.webp", "Cirios, velones y velas decoradas"]],
+};
+const withExtras = list => list.map(cat => {
+  const add = (EXTRAS[cat.id] || []).map(([file, alt]) => {
+    const src = `assets/img/${file}`;
+    const { w, h } = probeSize(src);
+    return { type: "image", src, thumb: src, w, h, alt };
+  });
+  const own = cat.items.filter(it => !it.src.startsWith("assets/img/"));
+  return { ...cat, items: [...own, ...add] };
+});
+const EXTRAS_ONLY = process.argv[2] === "--extras";
+const ONLY = EXTRAS_ONLY ? [] : process.argv.slice(2);
+const todo = EXTRAS_ONLY ? [] : ONLY.length ? CATEGORIES.filter(c => ONLY.includes(c.id)) : CATEGORIES;
 if (ONLY.length && todo.length !== ONLY.length) throw new Error("Unknown category id in: " + ONLY.join(", "));
 
 // Human names for the PDF catalogs, keyed by a fragment of the file name
@@ -219,7 +247,7 @@ const probeSize = file => {
 const pad = n => String(n).padStart(2, "0");
 const kb = f => Math.round(statSync(f).size / 1024);
 
-if (!ONLY.length) rmSync(OUT, { recursive: true, force: true });
+if (!ONLY.length && !EXTRAS_ONLY) rmSync(OUT, { recursive: true, force: true });
 const manifest = [];
 const browser = await chromium.launch();
 const page = await browser.newPage();
@@ -303,9 +331,9 @@ for (const cat of todo) {
 await browser.close();
 // Partial runs keep the other galleries as they are, in CATEGORIES order
 let out = manifest;
-if (ONLY.length) {
+if (ONLY.length || EXTRAS_ONLY) {
   const old = JSON.parse(readFileSync(`${OUT}/galeria.json`, "utf8"));
   out = CATEGORIES.map(c => manifest.find(m => m.id === c.id) || old.find(m => m.id === c.id)).filter(Boolean);
 }
-writeFileSync(`${OUT}/galeria.json`, JSON.stringify(out));
+writeFileSync(`${OUT}/galeria.json`, JSON.stringify(withExtras(out)));
 console.log(`${OUT}/galeria.json`);

@@ -345,12 +345,25 @@ test.describe("category galleries", () => {
   test("the new services open their own photo galleries", async ({ page }) => {
     await page.goto("/");
     await page.locator(".svc-stage").scrollIntoViewIfNeeded();
-    for (const [id, n] of [["sellos", 7], ["serigrafia", 3], ["corte-y-anillado", 2], ["empastados", 1], ["tarjetas-y-volantes", 2], ["placas-de-reconocimiento", 6], ["sobres-y-folders", 4], ["diplomas", 5]]) {
+    for (const [id, n] of [["sellos", 7], ["serigrafia", 3], ["corte-y-anillado", 2], ["empastados", 1], ["tarjetas-y-volantes", 2], ["placas-de-reconocimiento", 6], ["sobres-y-folders", 4], ["diplomas", 11], ["copas-personalizadas", 3]]) {
       await openService(page, id);
       await expect(page.locator("#gal")).toBeVisible();
       await expect(page.locator("#gal img")).toHaveCount(n);
       await page.keyboard.press("Escape");
       await expect(page.locator("#gal")).toBeHidden();
+    }
+  });
+
+  test("each service card counts the photos and videos its gallery really has", async ({ page }) => {
+    await page.goto("/");
+    const data = await (await page.request.get("/assets/galeria/galeria.json")).json();
+    for (const c of data) {
+      const p = c.items.filter(i => i.type === "image").length, v = c.items.filter(i => i.type === "video").length;
+      const parts = [];
+      if (p) parts.push(p + (p > 1 ? " fotos" : " foto"));
+      if (v) parts.push(v + (v > 1 ? " vídeos" : " vídeo"));
+      if (!parts.length) continue; // PDF catalogs (pages) describe themselves differently
+      await expect(page.locator(`.svc-card[data-gal="${c.id}"] small`), c.id).toHaveText(parts.join(" · "));
     }
   });
 
