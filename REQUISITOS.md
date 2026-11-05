@@ -79,6 +79,7 @@ Origen: catálogo FlipHTML5 "CATALOGO CALENDARIO NAVARRETE 2027" (68 páginas). 
 - [x] Franja roja «Nuevo: Catálogo de calendarios 2027 · Míralo aquí» encima de todo (lo primero que se ve al entrar), que abre el catálogo
 - [x] Mini portada flotante abajo a la izquierda (WhatsApp sigue a la derecha) que abre el catálogo; se puede cerrar y no reaparece en la misma visita; se aparta con el menú móvil abierto
 - [x] El catálogo se abre en un visor a pantalla completa con efecto de pasar página (libro abierto a doble página en escritorio, una página en móvil)
+- [x] Al pasar página suena un susurro de papel generado en el navegador (sin archivos de audio); el botón «Sonido» del visor lo silencia y la elección se recuerda en las siguientes visitas
 - [x] Botones para ir directamente a la portada (|‹) y a la última página (›|)
 - [x] Se navega con flechas, teclado (← →), deslizando el dedo y con un índice por secciones (Cromos, Anuales, Decorativos, Edinas, Cuatrimestrales, Escritorio, Tarjeta, Pared y bolsillo, Imágenes 2027)
 - [x] Contador "Página N de 66" y botón de WhatsApp que pide el modelo citando la página que se está viendo
