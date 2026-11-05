@@ -72,6 +72,8 @@ Web de una sola página para la Imprenta, Librería y Bazar "María Auxiliadora"
 Origen: catálogo FlipHTML5 "CATALOGO CALENDARIO NAVARRETE 2027" (68 páginas). Cambios pedidos: la página 1 pasa a ser la portada propia de la imprenta y se quitan las páginas 67 (agendas Navarrete) y 68 (contraportada Navarrete). Resultado: 66 páginas.
 - [x] Botón «Mira el catálogo» en las 3 escenas de la campaña de la portada y en una franja destacada propia («Catálogo de calendarios 2027», antes de Promociones) con la portada en 3D
 - [x] La portada del catálogo de la escena 4 se puede pulsar y abre el catálogo
+- [x] Franja roja «Nuevo: Catálogo de calendarios 2027 · Míralo aquí» encima de todo (lo primero que se ve al entrar), que abre el catálogo
+- [x] Mini portada flotante abajo a la izquierda (WhatsApp sigue a la derecha) que abre el catálogo; se puede cerrar y no reaparece en la misma visita; se aparta con el menú móvil abierto
 - [x] El catálogo se abre en un visor a pantalla completa con efecto de pasar página (libro abierto a doble página en escritorio, una página en móvil)
 - [x] Botones para ir directamente a la portada (|‹) y a la última página (›|)
 - [x] Se navega con flechas, teclado (← →), deslizando el dedo y con un índice por secciones (Cromos, Anuales, Decorativos, Edinas, Cuatrimestrales, Escritorio, Tarjeta, Pared y bolsillo, Imágenes 2027)

@@ -876,3 +876,71 @@ test.describe("calendar catalog 2027", () => {
     });
   }
 });
+
+test.describe("catalog visibility", () => {
+  const strip = page => page.locator(".camp-strip-btn");
+  const float = page => page.locator("#catFloat");
+
+  for (const viewport of [MOBILE, { width: 1440, height: 900 }]) {
+    test(`the red campaign strip is the very first thing on the page at ${viewport.width}px and opens the catalog`, async ({ page }) => {
+      await page.setViewportSize(viewport);
+      await page.goto("/");
+      expect(await page.evaluate(() => document.body.firstElementChild.className)).toBe("camp-strip");
+      const box = await strip(page).boundingBox();
+      expect(box.y).toBe(0);
+      expect(box.height).toBeGreaterThanOrEqual(44);
+      expect(box.x + box.width).toBeLessThanOrEqual(viewport.width);
+      await expect(strip(page)).toContainText("Catálogo de calendarios 2027");
+      await strip(page).click();
+      await expect(page.locator("#cat")).toBeVisible();
+      await expect(page.locator("#catCount")).toHaveText("Página 1 de 66");
+      await page.keyboard.press("Escape");
+      await expect(strip(page)).toBeFocused();
+    });
+
+    test(`the floating mini cover shows up, opens the catalog and stays clear of WhatsApp at ${viewport.width}px`, async ({ page }) => {
+      await page.setViewportSize(viewport);
+      await page.goto("/");
+      await expect(float(page)).toBeVisible();
+      const [f, wa] = await Promise.all([float(page).boundingBox(), page.locator("a.fab").boundingBox()]);
+      expect(f.x).toBeGreaterThanOrEqual(0);
+      expect(f.x + f.width).toBeLessThan(wa.x);
+      await page.getByRole("button", { name: "Catálogo 2027: ábrelo" }).click();
+      await expect(page.locator("#cat")).toBeVisible();
+      await page.keyboard.press("Escape");
+      await expect(page.getByRole("button", { name: "Catálogo 2027: ábrelo" })).toBeFocused();
+    });
+  }
+
+  test("closing the mini cover hides it for the rest of the visit", async ({ page }) => {
+    await page.goto("/");
+    await expect(float(page)).toBeVisible();
+    await page.getByRole("button", { name: "Ocultar catálogo" }).click();
+    await expect(float(page)).toBeHidden();
+    await page.reload();
+    await expect(float(page)).toBeHidden();
+    // The strip is still there to reach the catalog
+    await expect(strip(page)).toBeVisible();
+  });
+
+  test("the mini cover steps aside while the mobile menu is open", async ({ page }) => {
+    await page.setViewportSize(MOBILE);
+    await page.goto("/");
+    await expect(float(page)).toBeVisible();
+    await page.locator("#burger").click();
+    await expect(float(page)).toHaveCSS("pointer-events", "none");
+    await page.locator("#burger").click();
+    await expect(float(page)).not.toHaveCSS("pointer-events", "none");
+  });
+
+  for (const viewport of [MOBILE, { width: 1440, height: 900 }]) {
+    test(`strip and mini cover have no serious axe violations at ${viewport.width}px`, async ({ page }) => {
+      await page.setViewportSize(viewport);
+      await page.emulateMedia({ reducedMotion: "reduce" });
+      await page.goto("/");
+      await expect(float(page)).toBeVisible();
+      const results = await new AxeBuilder({ page }).include(".camp-strip").include("#catFloat").analyze();
+      expect(results.violations.filter(v => ["serious", "critical"].includes(v.impact)).map(v => v.id)).toEqual([]);
+    });
+  }
+});
