@@ -147,10 +147,12 @@
     var open = mm.classList.toggle('open');
     burger.classList.toggle('open', open);
     burger.setAttribute('aria-expanded', open ? 'true' : 'false');
+    document.body.classList.toggle('menu-open', open);
   });
   mm.querySelectorAll('a').forEach(function(a){
     a.addEventListener('click', function(){
       mm.classList.remove('open'); burger.classList.remove('open');
+      document.body.classList.remove('menu-open');
       burger.setAttribute('aria-expanded','false');
     });
   });
@@ -454,6 +456,301 @@
     }
     svcGo(0);
     svcPlay();
+  }
+
+  /* Catálogo de calendarios 2027 (visor tipo libro) */
+  var cat = document.getElementById('cat');
+  if (cat){
+    var CAT_N = 66;
+    var CAT_SECTIONS = [
+      ['Portada', 1], ['Cromos y tacos', 2], ['Anuales', 4], ['Decorativos', 6], ['Edinas', 14],
+      ['Cuatrimestrales', 20], ['Escritorio jumbo anillado', 25], ['Calendario tarjeta', 31],
+      ['Pared, comercial y bolsillo', 34], ['Imágenes 2027', 37]
+    ];
+    var catBook = document.getElementById('catBook'),
+        catLeft = catBook.querySelector('.cat-left img'),
+        catRight = catBook.querySelector('.cat-right img'),
+        catLeaf = catBook.querySelector('.cat-leaf'),
+        catFront = catLeaf.querySelector('.cat-front img'),
+        catBack = catLeaf.querySelector('.cat-back img'),
+        catShades = catLeaf.querySelectorAll('.cat-shade'),
+        catCount = document.getElementById('catCount'),
+        catBar = document.getElementById('catBar'),
+        catWa = document.getElementById('catWa'),
+        catIndex = document.getElementById('catIndex'),
+        catIndexBtn = document.getElementById('catIndexBtn'),
+        catZoom = document.getElementById('catZoom'),
+        catZoomBody = document.getElementById('catZoomBody');
+    var catSpreadMq = window.matchMedia('(min-width: 900px) and (min-aspect-ratio: 1/1)');
+    var catPage = 1, catOpener = null, catAnim = null, catCache = {}, catThumbsBuilt = false;
+
+    var catSrc = function(n){ return 'assets/catalogo/pagina-' + (n < 10 ? '0' : '') + n + '.webp'; };
+    var catSpread = function(){ return catSpreadMq.matches; };
+    // In book mode pages pair as [—,1] [2,3] … [66,—]; on phones one page at a time
+    var catPair = function(n){
+      if (!catSpread()) return [null, n];
+      var l = n % 2 === 0 ? n : n - 1;
+      return [l >= 1 ? l : null, l + 1 <= CAT_N ? l + 1 : null];
+    };
+    var catLoad = function(n){
+      if (!n) return Promise.resolve();
+      if (!catCache[n]){
+        var im = new Image();
+        im.src = catSrc(n);
+        catCache[n] = im.decode ? im.decode().catch(function(){}) : Promise.resolve();
+      }
+      // Never keep the reader waiting on a slow page for long
+      return Promise.race([catCache[n], new Promise(function(r){ setTimeout(r, 1500); })]);
+    };
+    var catSet = function(img, n){
+      img.parentNode.classList.toggle('is-empty', !n);
+      if (n){
+        img.src = catSrc(n);
+        img.alt = 'Página ' + n + ' del catálogo de calendarios 2027';
+      } else {
+        img.removeAttribute('src');
+        img.alt = '';
+      }
+    };
+    var catLabel = function(p){
+      return p[0] && p[1] ? 'Páginas ' + p[0] + ' y ' + p[1] : 'Página ' + (p[1] || p[0]);
+    };
+    var catUpdateUi = function(){
+      var p = catPair(catPage);
+      catCount.textContent = catLabel(p) + ' de ' + CAT_N;
+      catBar.style.transform = 'scaleX(' + ((p[1] || p[0]) / CAT_N) + ')';
+      catBook.classList.toggle('is-cover', catSpread() && !p[0]);
+      catBook.classList.toggle('is-back', catSpread() && !p[1]);
+      var atStart = catPage <= 1 || (catSpread() && !p[0]);
+      var atEnd = catSpread() ? !p[1] || p[1] >= CAT_N : catPage >= CAT_N;
+      document.getElementById('catPrev').disabled = atStart;
+      document.getElementById('catFirst').disabled = atStart;
+      document.getElementById('catNext').disabled = atEnd;
+      document.getElementById('catLast').disabled = atEnd;
+      catWa.href = WA + encodeURIComponent('Hola, vi el catálogo de calendarios 2027 en la página web y me interesa ' + (p[0] && p[1] ? 'lo de las ' : 'lo de la ') + catLabel(p).toLowerCase() + '.');
+      history.replaceState(null, '', '#catalogo-' + catPage);
+      // Warm up the next and previous pages so turning feels instant
+      var step = catSpread() ? 2 : 1;
+      [catPage + step, catPage + step + 1, catPage - step].forEach(function(n){ if (n >= 1 && n <= CAT_N) catLoad(n); });
+    };
+    var catShow = function(n){
+      catPage = n;
+      var p = catPair(n);
+      catSet(catLeft, p[0]);
+      catSet(catRight, p[1]);
+      catUpdateUi();
+    };
+    var catGo = function(n){
+      n = Math.max(1, Math.min(CAT_N, n));
+      var from = catPair(catPage), to = catPair(n);
+      if (from[0] === to[0] && from[1] === to[1]) return;
+      if (catAnim) catAnim.finish();
+      var fwd = (to[1] || to[0]) > (from[1] || from[0]);
+      Promise.all([catLoad(to[0]), catLoad(to[1])]).then(function(){
+        if (reduceMotion){ catShow(n); return; }
+        var spread = catSpread(), opts = { duration: spread ? 700 : 520, easing: 'cubic-bezier(.45,.05,.25,1)' };
+        catLeaf.className = 'cat-leaf ' + (spread ? (fwd ? 'on-right' : 'on-left') : 'on-single');
+        if (spread){
+          // The leaf carries the page being turned: its front is the old page, its back the new one
+          catSet(catFront, fwd ? from[1] : from[0]);
+          catSet(catBack, fwd ? to[0] : to[1]);
+          catSet(fwd ? catRight : catLeft, fwd ? to[1] : to[0]);
+          catPage = n;
+          catUpdateUi();
+          catAnim = catLeaf.animate([
+            { transform: 'rotateY(0deg)' }, { transform: 'rotateY(' + (fwd ? -180 : 180) + 'deg)' }
+          ], opts);
+        } else {
+          catSet(catBack, null);
+          if (fwd){
+            catSet(catFront, from[1]);
+            catSet(catRight, to[1]);
+          } else {
+            catSet(catFront, to[1]);
+          }
+          catPage = n;
+          catUpdateUi();
+          catAnim = catLeaf.animate(fwd
+            ? [{ transform: 'rotateY(0deg)', opacity: 1 }, { transform: 'rotateY(-100deg)', opacity: 0 }]
+            : [{ transform: 'rotateY(-100deg)', opacity: 0 }, { transform: 'rotateY(0deg)', opacity: 1 }], opts);
+        }
+        Array.prototype.forEach.call(catShades, function(s){
+          s.animate([{ opacity: 0 }, { opacity: .45 }, { opacity: 0 }], opts);
+        });
+        catAnim.onfinish = function(){
+          catAnim = null;
+          catLeaf.className = 'cat-leaf';
+          catShow(catPage);
+        };
+      });
+    };
+    var catNext = function(){ catGo(catSpread() ? (catPair(catPage)[1] || CAT_N) + 1 : catPage + 1); };
+    var catPrev = function(){ catGo(catSpread() ? (catPair(catPage)[0] || 1) - 1 : catPage - 1); };
+
+    var catBuildIndex = function(){
+      if (catThumbsBuilt) return;
+      catThumbsBuilt = true;
+      var list = document.getElementById('catSections'), grid = document.getElementById('catThumbs');
+      CAT_SECTIONS.forEach(function(s){
+        var b = el('button', { type: 'button', 'class': 'cat-sec' });
+        b.appendChild(el('span', {}, s[0]));
+        b.appendChild(el('small', {}, 'pág. ' + s[1]));
+        b.addEventListener('click', function(){ catPick(s[1]); });
+        list.appendChild(el('li')).appendChild(b);
+      });
+      for (var n = 1; n <= CAT_N; n++){
+        (function(n){
+          var b = el('button', { type: 'button', 'class': 'cat-thumb', 'aria-label': 'Ir a la página ' + n });
+          b.appendChild(el('img', { src: catSrc(n).replace('.webp', '-mini.webp'), alt: '', width: 220, height: 256, loading: 'lazy', decoding: 'async' }));
+          b.appendChild(el('span', { 'aria-hidden': 'true' }, String(n)));
+          b.addEventListener('click', function(){ catPick(n); });
+          grid.appendChild(b);
+        })(n);
+      }
+    };
+    var catToggleIndex = function(open){
+      catBuildIndex();
+      catIndex.hidden = !open;
+      catIndexBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+      if (open) catIndex.querySelector('.cat-sec').focus();
+    };
+    var catPick = function(n){
+      catToggleIndex(false);
+      catIndexBtn.focus();
+      catGo(n);
+    };
+
+    var catOpenZoom = function(pages){
+      catZoomBody.textContent = '';
+      pages.forEach(function(n){
+        if (n) catZoomBody.appendChild(el('img', { src: catSrc(n), alt: 'Página ' + n + ' ampliada', width: 1400, height: 1634 }));
+      });
+      catZoom.hidden = false;
+      catZoomBody.scrollLeft = 0;
+      catZoomBody.scrollTop = 0;
+      document.getElementById('catZoomClose').focus();
+    };
+    var catCloseZoom = function(){
+      if (catZoom.hidden) return;
+      catZoom.hidden = true;
+      catZoomBody.textContent = '';
+      document.getElementById('catZoomBtn').focus();
+    };
+
+    var catOpen = function(n, opener){
+      catOpener = opener || null;
+      cat.hidden = false;
+      document.body.style.overflow = 'hidden';
+      if (typeof hold === 'function') hold(true);
+      catShow(Math.max(1, Math.min(CAT_N, n || 1)));
+      cat.classList.remove('is-in');
+      void cat.offsetWidth;
+      cat.classList.add('is-in');
+      document.getElementById('catClose').focus();
+    };
+    var catClose = function(){
+      if (catAnim) catAnim.finish();
+      catCloseZoom();
+      catToggleIndex(false);
+      cat.hidden = true;
+      document.body.style.overflow = '';
+      if (typeof hold === 'function') hold(false);
+      history.replaceState(null, '', location.pathname + location.search);
+      if (catOpener) catOpener.focus();
+    };
+
+    document.querySelectorAll('[data-catalogo]').forEach(function(b){
+      b.addEventListener('click', function(){ catOpen(+b.dataset.catalogo || 1, b); });
+    });
+    document.getElementById('catClose').addEventListener('click', catClose);
+    document.getElementById('catNext').addEventListener('click', catNext);
+    document.getElementById('catPrev').addEventListener('click', catPrev);
+    document.getElementById('catFirst').addEventListener('click', function(){ catGo(1); });
+    document.getElementById('catLast').addEventListener('click', function(){ catGo(CAT_N); });
+    catIndexBtn.addEventListener('click', function(){ catToggleIndex(catIndex.hidden); });
+    document.getElementById('catIndexClose').addEventListener('click', function(){ catToggleIndex(false); catIndexBtn.focus(); });
+    document.getElementById('catZoomBtn').addEventListener('click', function(){ catOpenZoom(catPair(catPage)); });
+    document.getElementById('catZoomClose').addEventListener('click', catCloseZoom);
+    // Click the right half to turn forward and the left half to turn back, like a real book
+    var catX = null, catSwiped = false;
+    catBook.addEventListener('click', function(e){
+      if (catSwiped){ catSwiped = false; return; }
+      var r = catBook.getBoundingClientRect();
+      if (e.clientX > r.left + r.width / 2) catNext(); else catPrev();
+    });
+    // Swipe to turn on touch screens
+    catBook.addEventListener('pointerdown', function(e){ if (e.pointerType !== 'mouse'){ catX = e.clientX; catSwiped = false; } });
+    catBook.addEventListener('pointerup', function(e){
+      if (catX === null) return;
+      var dx = e.clientX - catX;
+      catX = null;
+      if (Math.abs(dx) > 40){ catSwiped = true; if (dx < 0) catNext(); else catPrev(); }
+    });
+    catBook.addEventListener('pointercancel', function(){ catX = null; });
+    // Drag to pan the zoomed page with the mouse
+    var catDrag = null;
+    catZoomBody.addEventListener('pointerdown', function(e){
+      if (e.pointerType !== 'mouse') return;
+      catDrag = { x: e.clientX, y: e.clientY, l: catZoomBody.scrollLeft, t: catZoomBody.scrollTop };
+      catZoomBody.classList.add('is-drag');
+    });
+    window.addEventListener('pointermove', function(e){
+      if (!catDrag) return;
+      catZoomBody.scrollLeft = catDrag.l - (e.clientX - catDrag.x);
+      catZoomBody.scrollTop = catDrag.t - (e.clientY - catDrag.y);
+    });
+    window.addEventListener('pointerup', function(){ catDrag = null; catZoomBody.classList.remove('is-drag'); });
+    catSpreadMq.addEventListener('change', function(){ if (!cat.hidden) catShow(catPage); });
+
+    document.addEventListener('keydown', function(e){
+      if (cat.hidden) return;
+      if (e.key === 'Escape'){
+        e.preventDefault();
+        if (!catZoom.hidden) catCloseZoom();
+        else if (!catIndex.hidden){ catToggleIndex(false); catIndexBtn.focus(); }
+        else catClose();
+        return;
+      }
+      if (catZoom.hidden && catIndex.hidden){
+        if (e.key === 'ArrowRight'){ e.preventDefault(); catNext(); }
+        if (e.key === 'ArrowLeft'){ e.preventDefault(); catPrev(); }
+        if (e.key === 'Home'){ e.preventDefault(); catGo(1); }
+        if (e.key === 'End'){ e.preventDefault(); catGo(CAT_N); }
+      }
+      // Keep keyboard focus inside the viewer (or the zoom layer when it is open)
+      if (e.key === 'Tab'){
+        var layer = catZoom.hidden ? cat : catZoom;
+        var f = Array.prototype.filter.call(layer.querySelectorAll('button, a[href]'), function(x){
+          return !x.disabled && x.getClientRects().length > 0;
+        });
+        var first = f[0], last = f[f.length - 1];
+        if (e.shiftKey && document.activeElement === first){ e.preventDefault(); last.focus(); }
+        else if (!e.shiftKey && document.activeElement === last){ e.preventDefault(); first.focus(); }
+      }
+    });
+
+    // Shareable links: #catalogo opens the cover, #catalogo-12 opens page 12
+    var catFromHash = function(){
+      var m = location.hash.match(/^#catalogo(?:-(\d+))?$/);
+      if (m && cat.hidden) catOpen(m[1] ? +m[1] : 1, null);
+    };
+    window.addEventListener('hashchange', catFromHash);
+    catFromHash();
+  }
+
+  /* Mini portada flotante del catálogo */
+  var catFloat = document.getElementById('catFloat');
+  if (catFloat){
+    var CAT_FLOAT_KEY = 'catFloatClosed';
+    var floatClosed = false;
+    try { floatClosed = sessionStorage.getItem(CAT_FLOAT_KEY) === '1'; } catch (e) {}
+    if (!floatClosed) catFloat.hidden = false;
+    document.getElementById('catFloatX').addEventListener('click', function(){
+      try { sessionStorage.setItem(CAT_FLOAT_KEY, '1'); } catch (e) {}
+      if (reduceMotion){ catFloat.hidden = true; return; }
+      catFloat.classList.add('is-out');
+      setTimeout(function(){ catFloat.hidden = true; }, 300);
+    });
   }
 
   /* Formulario -> WhatsApp */
