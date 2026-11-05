@@ -40,9 +40,17 @@ Web de una sola página para la Imprenta, Librería y Bazar "María Auxiliadora"
 - [x] El modo oscuro cumple contraste AA y no altera las fotos de productos
 - [x] En «Todo lo que hacemos», los servicios con material se muestran en un carrusel 3D de tarjetas (foto real, título y contador de fotos/vídeos); al tocar una tarjeta se abre su galería, usable con teclado
 - [x] El fondo del carrusel cambia de color con cada tarjeta (paleta de marca) y la tarjeta activa se balancea suavemente (inspirado en el shot "EdTech Mascot Character Animation" de Abron Studio, sin mascota)
-- [x] Encima del carrusel hay un solo botón «Toca aquí y mira todos los servicios». Al pulsarlo, los 15 servicios salen como iconos de colores desde el centro del panel, sobre un fondo oscuro de cuadritos (7 columnas con la ✕ en el centro en escritorio; 4 por fila con la ✕ arriba a la derecha en móvil). Al tocar un icono se cierra el panel y se salta a la tarjeta de ese servicio.
-- [x] Nuevos servicios con galería de fotos: Impresiones y copias, Diagramación, Sellos, Serigrafía, Enmicados, Empastados y Corte y anillado (salen de la lista simple de servicios)
+- [x] Encima del carrusel hay un solo botón «Toca aquí y mira todos los servicios». Al pulsarlo, los 27 servicios salen como iconos de colores desde el centro del panel, sobre un fondo oscuro de cuadritos (7 columnas con la ✕ en el centro en escritorio; 4 por fila con la ✕ arriba a la derecha en móvil; el recuadro crece si el panel no cabe). Al tocar un icono se cierra el panel y se salta a la tarjeta de ese servicio.
+- [x] Nuevos servicios con galería de fotos: Impresiones y copias, Diagramación, Sellos, Serigrafía, Enmicados, Empastados, Corte y anillado y Tarjetas y volantes (salen de la lista simple de servicios)
 - [x] En la foto del empastado se difuminan los nombres de los alumnos y la docente (datos personales); el resto de la foto no cambia
+- [x] Se difuminan nombres, teléfonos, correos y direcciones en Diseño gráfico, Tarjetas y volantes y Placas de reconocimiento
+- [x] Nuevos servicios con fotos propias: Placas de reconocimiento (6), Copas personalizadas (1, recortada sin la pantalla del móvil) e Imágenes de santos (1 vídeo)
+- [x] Servicios con fotos genéricas de dominio público (CC0, fuentes en tools/genericas-fuentes.json): Sobres y folders, Agendas, Libros contables, Cintas de embalaje y film, Escaneos y Tipeos; Creación de páginas web usa capturas de esta web
+- [x] Diplomas: un diploma por plantilla (5), con caras, nombres, fotos de grupo y listas de alumnos difuminadas. Ya no queda lista simple de servicios: los 27 tienen galería
+- [x] En el móvil, las fotos de cada servicio se pasan deslizando el dedo a izquierda o derecha (también siguen las flechas)
+- [x] La etiqueta «Servicios» es más grande que las de las demás secciones y más llamativa (degradado fucsia-morado, estrella y brillo)
+- [x] Las galerías de Diplomas (6 cuadros), Copas personalizadas (2), Imágenes de santos (1) y Cirios, velas y velones (1) suman fotos del catálogo de la propia web
+- [x] El contador de fotos y vídeos de cada tarjeta coincide con su galería
 - [x] El panel de servicios se cierra con la ✕ central, con Escape o al tocar el fondo, y el foco vuelve al botón.
 - [x] El carrusel se mueve con esos botones, flechas, teclas ← → y deslizando en móvil; avanza solo cada 3,5 s cuando está a la vista, se pausa con el ratón o el foco encima, deja de avanzar solo en cuanto el visitante lo usa y no se mueve solo con «reducir movimiento»
 - [x] La galería no descarga nada hasta que se abre una categoría (salvo las 8 miniaturas de portada del carrusel)

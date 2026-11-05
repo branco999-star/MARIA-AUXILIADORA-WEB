@@ -313,7 +313,7 @@
     document.body.style.overflow = '';
     if (galOpener) galOpener.focus();
   }
-  function showView(i){
+  function showView(i, dir){
     var items = galCat.items;
     galIdx = (i + items.length) % items.length;
     var it = items[galIdx];
@@ -323,6 +323,10 @@
       : el('img', { src: it.src, alt: it.alt, width: it.w, height: it.h });
     galMedia.appendChild(m);
     galCaption.textContent = it.alt + ' · ' + (galIdx + 1) + ' de ' + items.length;
+    // After a swipe the new photo slides in from the side the finger moved away from
+    if (dir && !reduceMotion && m.animate){
+      m.animate([{ transform: 'translateX(' + (dir * 60) + 'px)', opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 280, easing: 'ease-out' });
+    }
   }
   function openView(i, thumb){
     galThumb = thumb;
@@ -344,6 +348,27 @@
   document.getElementById('gvClose').addEventListener('click', closeView);
   document.getElementById('gvPrev').addEventListener('click', function(){ showView(galIdx - 1); });
   document.getElementById('gvNext').addEventListener('click', function(){ showView(galIdx + 1); });
+  // Swipe left or right with a finger to move between photos; vertical moves and pinch-zoom stay native
+  var gvX = null, gvY = null, gvSwiped = false;
+  galView.addEventListener('pointerdown', function(e){
+    if (e.pointerType === 'mouse' || !e.isPrimary) return;
+    gvX = e.clientX; gvY = e.clientY; gvSwiped = false;
+  });
+  galView.addEventListener('pointerup', function(e){
+    if (gvX === null) return;
+    var dx = e.clientX - gvX, dy = e.clientY - gvY;
+    gvX = gvY = null;
+    if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) * 1.2){
+      var dir = dx < 0 ? 1 : -1;
+      gvSwiped = true;
+      showView(galIdx + dir, dir);
+    }
+  });
+  galView.addEventListener('pointercancel', function(){ gvX = gvY = null; });
+  // The tap that ends a swipe must not also close the viewer or press a button
+  galView.addEventListener('click', function(e){
+    if (gvSwiped){ e.stopImmediatePropagation(); e.preventDefault(); gvSwiped = false; }
+  }, true);
   gal.addEventListener('click', function(e){ if (e.target === gal) closeGaleria(); });
   galView.addEventListener('click', function(e){ if (e.target === galView) closeView(); });
   document.addEventListener('keydown', function(e){
@@ -422,6 +447,9 @@
       if (svcPanel.getAnimations) svcPanel.getAnimations({subtree: true}).forEach(function(a){ a.cancel(); });
       svcPanel.hidden = false;
       svcOpenBtn.setAttribute('aria-expanded', 'true');
+      // With many services the board can be taller than the deck: let the stage grow while the panel is open
+      svc.style.minHeight = '';
+      if (svcPanel.scrollHeight > svc.clientHeight) svc.style.minHeight = (svcPanel.scrollHeight + 48) + 'px';
       svcPlay();
       if (!reduceMotion && svcPanel.animate){
         svcPanel.animate([{opacity: 0}, {opacity: 1}], {duration: 220, easing: 'ease-out'});
@@ -440,6 +468,7 @@
         // Reopened while the closing animation ran: leave it open
         if (svcOpenBtn.getAttribute('aria-expanded') === 'true') return;
         svcPanel.hidden = true;
+        svc.style.minHeight = '';
         svcPlay();
       };
       if (focusEl) focusEl.focus({preventScroll: true});

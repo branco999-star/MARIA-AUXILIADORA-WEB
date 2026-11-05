@@ -1,0 +1,119 @@
+{
+  "sobres-y-folders": [
+    {
+      "file": "1.jpg",
+      "title": "Free binder image",
+      "license": "cc0",
+      "source": "rawpixel",
+      "page": "https://www.rawpixel.com/image/5912303/photo-image-public-domain-office-free"
+    },
+    {
+      "file": "2.jpg",
+      "title": "File. Free public domain CC0",
+      "license": "cc0",
+      "source": "rawpixel",
+      "page": "https://www.rawpixel.com/image/5961451/free-public-domain-cc0-photo"
+    },
+    {
+      "file": "3.jpg",
+      "title": "Free workspace flat lay image",
+      "license": "cc0",
+      "source": "rawpixel",
+      "page": "https://www.rawpixel.com/image/5925427/photo-image-book-public-domain-plant"
+    },
+    {
+      "file": "4.jpg",
+      "title": "Blank Envelope",
+      "license": "cc0",
+      "source": "stocksnap",
+      "page": "https://stocksnap.io/photo/blank-envelope-RGWKYO1ALW"
+    }
+  ],
+  "agendas": [
+    {
+      "file": "1.jpg",
+      "title": "Writing Hand",
+      "license": "cc0",
+      "source": "stocksnap",
+      "page": "https://stocksnap.io/photo/writing-hand-2FRRD2PUVA"
+    },
+    {
+      "file": "2.jpg",
+      "title": "Workplace Desk",
+      "license": "cc0",
+      "source": "stocksnap",
+      "page": "https://stocksnap.io/photo/workplace-desk-TD0ZOMAYHJ"
+    },
+    {
+      "file": "3.jpg",
+      "title": "Journal Pen",
+      "license": "cc0",
+      "source": "stocksnap",
+      "page": "https://stocksnap.io/photo/journal-pen-4HPYA3C8HE"
+    }
+  ],
+  "libros-contables": [
+    {
+      "file": "1.jpg",
+      "title": "Accounting Finance",
+      "license": "cc0",
+      "source": "stocksnap",
+      "page": "https://stocksnap.io/photo/accounting-finance-JONMP7TPGK"
+    },
+    {
+      "file": "2.jpg",
+      "title": "Calculator Numbers",
+      "license": "cc0",
+      "source": "stocksnap",
+      "page": "https://stocksnap.io/photo/calculator-numbers-VVXW9WBTB8"
+    }
+  ],
+  "cintas-de-embalaje-y-film": [
+    {
+      "file": "1.jpg",
+      "title": "Clipboard Hand",
+      "license": "cc0",
+      "source": "stocksnap",
+      "page": "https://stocksnap.io/photo/clipboard-hand-TRKNLIGFAJ"
+    },
+    {
+      "file": "2.jpg",
+      "title": "Cardboard Box",
+      "license": "cc0",
+      "source": "stocksnap",
+      "page": "https://stocksnap.io/photo/cardboard-box-USP4WCYPBW"
+    }
+  ],
+  "escaneos": [
+    {
+      "file": "1.jpg",
+      "title": "Free close person hands using",
+      "license": "cc0",
+      "source": "rawpixel",
+      "page": "https://www.rawpixel.com/image/5917650/image-background-paper-public-domain"
+    },
+    {
+      "file": "2.jpg",
+      "title": "Free close person hands using",
+      "license": "cc0",
+      "source": "rawpixel",
+      "page": "https://www.rawpixel.com/image/5917894/image-background-paper-public-domain"
+    }
+  ],
+  "tipeos": [
+    {
+      "file": "1.jpg",
+      "title": "Free woman's hands typing laptop",
+      "license": "cc0",
+      "source": "rawpixel",
+      "page": "https://www.rawpixel.com/image/5921173/photo-image-background-public-domain-hands"
+    },
+    {
+      "file": "2.jpg",
+      "title": "Woman Typing Laptop",
+      "license": "cc0",
+      "source": "rawpixel",
+      "page": "https://www.rawpixel.com/image/5966483/woman-typing-laptop"
+    }
+  ]
+}

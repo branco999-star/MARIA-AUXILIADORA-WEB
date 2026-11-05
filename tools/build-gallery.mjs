@@ -1,5 +1,6 @@
 // Usage: FFMPEG=<path to ffmpeg.exe> node tools/build-gallery.mjs [category id ...]
 // With category ids, only those galleries are rebuilt and merged into the existing galeria.json.
+// With --extras, nothing is rebuilt: only the EXTRAS (catalog photos already on the site) are re-applied.
 // Needs the local server running (npm run serve) to render PDF pages with pdf.js in Chromium.
 // Reads the original material folders (never modified) and writes web-ready copies to assets/galeria/:
 //   photos -> WebP (no metadata), videos -> 480px H.264 + AAC audio + WebP poster,
@@ -21,7 +22,12 @@ const CATEGORIES = [
   { id: "llaveros-y-souvenirs", title: "Llaveros y souvenirs", folder: "Llaveros y souvenirs" },
   { id: "invitaciones", title: "Invitaciones", folder: "Recuerdos para eventos" },
   { id: "cuadros-de-promocion", title: "Cuadros de promoción", folder: "cuadros de promocion" },
-  { id: "diseno-grafico", title: "Diseño gráfico", folder: "diseño grafico" },
+  { id: "diseno-grafico", title: "Diseño gráfico", folder: "diseño grafico", blur: {
+    "PM (1).jpeg": { x: 70, y: 1450, w: 1030, h: 130 },
+    "PM (2).jpeg": { x: 20, y: 455, w: 440, h: 150 },
+    "PM (3).jpeg": [{ x: 360, y: 275, w: 345, h: 60 }, { x: 205, y: 455, w: 600, h: 175 }],
+    "PM (4).jpeg": { x: 230, y: 1270, w: 470, h: 130 },
+  } },
   { id: "impresiones-y-copias", title: "Impresiones y copias", folder: "Impresiones y copias",
     alts: ["Impresiones a todo color de documentos y volantes"] },
   { id: "diagramacion", title: "Diagramación", folder: "Diagramacion",
@@ -46,9 +52,183 @@ const CATEGORIES = [
     blur: { "10.26.20": { x: 375, y: 790, w: 390, h: 335 } } },
   { id: "corte-y-anillado", title: "Corte y anillado", folder: "Corte y anillado",
     alts: ["Guillotina cortando un taco de hojas", "Documentos anillados con espiral y tapas de colores"] },
+  // The mock-up with three clients' cards is left out: with their data blurred it no longer reads well
+  { id: "tarjetas-y-volantes", title: "Tarjetas y volantes", folder: "Tarjetas y volantes", pick: [
+    ["10.26.42 PM.jpeg", "Volante turístico «Vive Cumbe, la ruta de los deseos»"],
+    ["10.26.52 PM.jpeg", "Taco de tarjetas de presentación a todo color para un equipo de sonido"],
+  ], blur: { "10.26.52 PM.jpeg": { x: 640, y: 265, w: 140, h: 90 } } },
+  { id: "placas-de-reconocimiento", title: "Placas de reconocimiento", folder: "Placas de reconocimiento", pick: [
+    ["10.00.53 PM.jpeg", "Placa de acrílico con base azul en su estuche rojo"],
+    ["10.00.52 PM (1).jpeg", "Reconocimiento de acrílico rojo para una empresa en su estuche"],
+    ["10.00.52 PM.jpeg", "Plato recordatorio de metal con placa dorada grabada"],
+    ["10.00.53 PM (1).jpeg", "Reconocimiento de vidrio con laurel grabado en su estuche"],
+    ["10.09.23 PM.jpeg", "Placa dorada de reconocimiento sobre base de ónix"],
+    ["10.09.23 PM (1).jpeg", "Placa de mármol conmemorativa de una obra municipal"],
+  ], blur: {
+    "10.00.52 PM.jpeg": { x: 230, y: 785, w: 450, h: 70 },
+    "10.00.53 PM (1).jpeg": { x: 380, y: 790, w: 330, h: 60 },
+    "10.00.53 PM.jpeg": { x: 290, y: 650, w: 390, h: 52 },
+    "10.09.23 PM (1).jpeg": [{ x: 260, y: 782, w: 460, h: 40 }, { x: 220, y: 898, w: 550, h: 172 }],
+    "10.09.23 PM.jpeg": [{ x: 240, y: 745, w: 430, h: 40 }, { x: 485, y: 920, w: 180, h: 45 }],
+  } },
+  { id: "copas-personalizadas", title: "Copas personalizadas", folder: "Copas personalizadas",
+    alts: ["Copas de aniversario con nombres en letras doradas y lazos rosados"],
+    crop: { "10.09.23 PM.jpeg": { x: 0, y: 160, w: 738, h: 1040 } } },
+  { id: "imagenes-de-santos", title: "Imágenes de santos", folder: "magenes de santos" },
+  // Generic CC0 photos (sources and licences in tools/genericas-fuentes.json), kept in the git-ignored genericas/ folder
+  { id: "sobres-y-folders", title: "Sobres y folders", folder: "genericas/sobres-y-folders",
+    alts: ["Folders colgantes de colores en un archivador", "Folders de cartulina con pestañas en un archivador", "Escritorio con sobre kraft y tarjeta", "Sobre rosado colgado con una pinza"] },
+  { id: "agendas", title: "Agendas", folder: "genericas/agendas",
+    alts: ["Persona escribiendo en una agenda anillada", "Agendas y cuadernos rosados sobre un escritorio blanco", "Agenda de tapa blanca con dos lapiceros"] },
+  { id: "libros-contables", title: "Libros contables", folder: "genericas/libros-contables",
+    alts: ["Contabilidad con calculadora y laptop sobre el escritorio", "Calculadora azul con lápiz y notas adhesivas"] },
+  { id: "cintas-de-embalaje-y-film", title: "Cintas de embalaje y film", folder: "genericas/cintas-de-embalaje-y-film",
+    alts: ["Caja blanca sellada con cinta de embalaje", "Cajas de cartón embaladas"] },
+  { id: "escaneos", title: "Escaneos", folder: "genericas/escaneos",
+    alts: ["Persona colocando un documento en el escáner", "Escaneo de una hoja en una impresora multifuncional"] },
+  { id: "tipeos", title: "Tipeos", folder: "genericas/tipeos",
+    alts: ["Manos tipeando un documento en una laptop", "Manos escribiendo en el teclado de una laptop"] },
+  { id: "creacion-de-paginas-web", title: "Creación de páginas web", folder: "genericas/creacion-de-paginas-web",
+    alts: ["Página web de la imprenta vista en una computadora", "Página web de la imprenta vista en un celular"] },
+  // One diploma per template; children's faces, names, group photos and class lists are blurred
+  { id: "diplomas", title: "Diplomas", folder: "Diplomas", pick: [
+    ["9.53.06 PM (2).jpeg", "Diploma de egresada con diseño «Mi Dulce Princesa»"],
+    ["9.53.08 PM (1).jpeg", "Diploma de egresado con diseño «Mi Príncipe Roblox»"],
+    ["9.53.10 PM.jpeg", "Diploma de egresado con diseño «Héroe Galaxy»"],
+    ["9.53.13 PM (3).jpeg", "Diploma de promoción con diseño «Zona Gamer»"],
+    ["9.53.13 PM (4).jpeg", "Diploma de promoción con diseño «TikTok Queen»"],
+  ], blur: {
+    "9.53.06 PM (2).jpeg": [{"x": 192,
+    "y": 384,
+    "w": 180,
+    "h": 138}, {"x": 192,
+    "y": 734,
+    "w": 198,
+    "h": 58}, {"x": 504,
+    "y": 270,
+    "w": 168,
+    "h": 132}, {"x": 732,
+    "y": 204,
+    "w": 300,
+    "h": 186}, {"x": 828,
+    "y": 426,
+    "w": 204,
+    "h": 198}, {"x": 492,
+    "y": 570,
+    "w": 174,
+    "h": 132}, {"x": 714,
+    "y": 654,
+    "w": 306,
+    "h": 174}],
+    "9.53.08 PM (1).jpeg": [{"x": 189,
+    "y": 378,
+    "w": 214,
+    "h": 176}, {"x": 126,
+    "y": 806,
+    "w": 164,
+    "h": 57}, {"x": 554,
+    "y": 252,
+    "w": 189,
+    "h": 176}, {"x": 750,
+    "y": 208,
+    "w": 321,
+    "h": 208}, {"x": 813,
+    "y": 435,
+    "w": 195,
+    "h": 208}, {"x": 529,
+    "y": 573,
+    "w": 189,
+    "h": 139}, {"x": 743,
+    "y": 662,
+    "w": 296,
+    "h": 189}],
+    "9.53.10 PM.jpeg": [{"x": 811,
+    "y": 228,
+    "w": 165,
+    "h": 215}, {"x": 741,
+    "y": 741,
+    "w": 291,
+    "h": 63}, {"x": 171,
+    "y": 177,
+    "w": 285,
+    "h": 184}, {"x": 253,
+    "y": 374,
+    "w": 209,
+    "h": 203}, {"x": 146,
+    "y": 602,
+    "w": 310,
+    "h": 190}],
+    "9.53.13 PM (3).jpeg": [{"x": 427,
+    "y": 305,
+    "w": 229,
+    "h": 213}, {"x": 399,
+    "y": 622,
+    "w": 183,
+    "h": 61}, {"x": 831,
+    "y": 244,
+    "w": 130,
+    "h": 107}, {"x": 1067,
+    "y": 274,
+    "w": 107,
+    "h": 91}, {"x": 762,
+    "y": 480,
+    "w": 290,
+    "h": 198}, {"x": 1036,
+    "y": 442,
+    "w": 198,
+    "h": 290}],
+    "9.53.13 PM (4).jpeg": [{"x": 400,
+    "y": 360,
+    "w": 224,
+    "h": 160}, {"x": 381,
+    "y": 693,
+    "w": 216,
+    "h": 77}, {"x": 832,
+    "y": 248,
+    "w": 144,
+    "h": 144}, {"x": 1088,
+    "y": 272,
+    "w": 80,
+    "h": 96}, {"x": 760,
+    "y": 512,
+    "w": 320,
+    "h": 224}, {"x": 1056,
+    "y": 464,
+    "w": 224,
+    "h": 320}],
+  } },
 ];
-const ONLY = process.argv.slice(2);
-const todo = ONLY.length ? CATEGORIES.filter(c => ONLY.includes(c.id)) : CATEGORIES;
+// Catalog photos already published elsewhere on the page (assets/img/), added at the end of a gallery
+const EXTRAS = {
+  "diplomas": [
+    ["cuadro-mi-dulce-princesa-super-biomadera-3d.webp", "Cuadro de promoción «Mi Dulce Princesa», línea Súper Biomadera 3D"],
+    ["cuadro-heroe-galaxy-super-biomadera-3d.webp", "Cuadro de promoción «Héroe Galaxy», línea Súper Biomadera 3D"],
+    ["cuadro-mi-principe-roblox-super-biomadera-3d.webp", "Cuadro de promoción «Mi Príncipe Roblox», línea Súper Biomadera 3D"],
+    ["cuadro-mi-princesa-kpop-super-biomadera-3d.webp", "Cuadro de promoción «Mi Princesa KPOP», línea Súper Biomadera 3D"],
+    ["cuadro-piedra-sinterizada-azul-elegancia.webp", "Cuadro de promoción en piedra sinterizada azul, línea Elegancia"],
+    ["cuadro-piedra-sinterizada-rosada-elegancia.webp", "Cuadro de promoción en piedra sinterizada rosada, línea Elegancia"],
+  ],
+  "copas-personalizadas": [
+    ["copas-personalizadas.webp", "Copas grabadas con los nombres de los novios"],
+    ["copas-de-regalo.webp", "Copas de regalo grabadas con nombre y dedicatoria"],
+  ],
+  "imagenes-de-santos": [["imagenes-de-santos.webp", "Imágenes religiosas de distintos tamaños"]],
+  "cirios-velas-y-velones": [["cirios-velas-y-velones.webp", "Cirios, velones y velas decoradas"]],
+};
+// In these galleries the catalog photos go first (they show the product better than blurred client photos)
+const EXTRAS_FIRST = ["diplomas"];
+const withExtras = list => list.map(cat => {
+  const add = (EXTRAS[cat.id] || []).map(([file, alt]) => {
+    const src = `assets/img/${file}`;
+    const { w, h } = probeSize(src);
+    return { type: "image", src, thumb: src, w, h, alt };
+  });
+  const own = cat.items.filter(it => !it.src.startsWith("assets/img/"));
+  return { ...cat, items: EXTRAS_FIRST.includes(cat.id) ? [...add, ...own] : [...own, ...add] };
+});
+const EXTRAS_ONLY = process.argv[2] === "--extras";
+const ONLY = EXTRAS_ONLY ? [] : process.argv.slice(2);
+const todo = EXTRAS_ONLY ? [] : ONLY.length ? CATEGORIES.filter(c => ONLY.includes(c.id)) : CATEGORIES;
 if (ONLY.length && todo.length !== ONLY.length) throw new Error("Unknown category id in: " + ONLY.join(", "));
 
 // Human names for the PDF catalogs, keyed by a fragment of the file name
@@ -69,7 +249,7 @@ const probeSize = file => {
 const pad = n => String(n).padStart(2, "0");
 const kb = f => Math.round(statSync(f).size / 1024);
 
-if (!ONLY.length) rmSync(OUT, { recursive: true, force: true });
+if (!ONLY.length && !EXTRAS_ONLY) rmSync(OUT, { recursive: true, force: true });
 const manifest = [];
 const browser = await chromium.launch();
 const page = await browser.newPage();
@@ -87,8 +267,14 @@ for (const cat of todo) {
   for (const f of files.filter(f => /\.jpe?g$/i.test(f))) {
     const base = `${dir}/foto-${pad(++nPhoto)}`;
     const src = path.join(cat.folder, f);
-    const b = cat.blur && Object.entries(cat.blur).find(([k]) => f.includes(k));
-    const pre = b ? `split[a][b];[b]crop=${b[1].w}:${b[1].h}:${b[1].x}:${b[1].y},boxblur=20:4[bl];[a][bl]overlay=${b[1].x}:${b[1].y},` : "";
+    // Personal data (names, phones, emails) is blurred region by region; an optional crop drops phone-screen UI
+    const hit = obj => obj && Object.entries(obj).find(([k]) => f.includes(k));
+    const b = hit(cat.blur), crop = hit(cat.crop);
+    const zones = b ? [].concat(b[1]) : [];
+    // Chroma planes are half size, so the radius must stay under a quarter of the zone's short side
+    const blurR = z => Math.max(2, Math.min(20, Math.floor(Math.min(z.w, z.h) / 4) - 1));
+    let pre = zones.map((z, i) => `split[a${i}][b${i}];[b${i}]crop=${z.w}:${z.h}:${z.x}:${z.y},boxblur=${blurR(z)}:${blurR(z) < 12 ? 8 : 4}[c${i}];[a${i}][c${i}]overlay=${z.x}:${z.y},`).join("");
+    if (crop) pre += `crop=${crop[1].w}:${crop[1].h}:${crop[1].x}:${crop[1].y},`;
     ff(["-i", src, "-map_metadata", "-1", "-vf", `${pre}scale='min(1200,iw)':-2`, "-c:v", "libwebp", "-quality", "80", `${base}.webp`]);
     ff(["-i", src, "-map_metadata", "-1", "-vf", `${pre}scale='min(360,iw)':-2`, "-c:v", "libwebp", "-quality", "70", `${base}-mini.webp`]);
     const { w, h } = probeSize(`${base}.webp`);
@@ -147,9 +333,9 @@ for (const cat of todo) {
 await browser.close();
 // Partial runs keep the other galleries as they are, in CATEGORIES order
 let out = manifest;
-if (ONLY.length) {
+if (ONLY.length || EXTRAS_ONLY) {
   const old = JSON.parse(readFileSync(`${OUT}/galeria.json`, "utf8"));
   out = CATEGORIES.map(c => manifest.find(m => m.id === c.id) || old.find(m => m.id === c.id)).filter(Boolean);
 }
-writeFileSync(`${OUT}/galeria.json`, JSON.stringify(out));
+writeFileSync(`${OUT}/galeria.json`, JSON.stringify(withExtras(out)));
 console.log(`${OUT}/galeria.json`);

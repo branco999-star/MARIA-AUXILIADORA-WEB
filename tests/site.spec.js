@@ -195,7 +195,7 @@ test("images have alt, size attributes, WebP and lazy loading below the fold", a
   const imgs = await page.$$eval("main img, nav img, footer img", els => els.map(i => ({
     src: i.getAttribute("src"), alt: i.getAttribute("alt"), w: i.getAttribute("width"), h: i.getAttribute("height"), lazy: i.getAttribute("loading"),
   })));
-  expect(imgs.length).toBe(61);
+  expect(imgs.length).toBe(73);
   for (const i of imgs) {
     expect(i.alt, i.src).not.toBeNull();
     expect(i.w && i.h, i.src).toBeTruthy();
@@ -328,7 +328,9 @@ async function openService(page, id) {
 
 test.describe("category galleries", () => {
   const CATS = ["almanaques", "bolsas-kraft", "cajas-con-tu-logo", "cirios-velas-y-velones", "llaveros-y-souvenirs", "invitaciones", "cuadros-de-promocion", "diseno-grafico",
-    "impresiones-y-copias", "diagramacion", "sellos", "serigrafia", "enmicados", "empastados", "corte-y-anillado"];
+    "impresiones-y-copias", "diagramacion", "sellos", "serigrafia", "enmicados", "empastados", "corte-y-anillado", "tarjetas-y-volantes",
+    "placas-de-reconocimiento", "copas-personalizadas", "imagenes-de-santos", "sobres-y-folders", "agendas", "libros-contables",
+    "cintas-de-embalaje-y-film", "escaneos", "tipeos", "creacion-de-paginas-web", "diplomas"];
 
   test("the service carousel has one gallery card per material folder, and no separate gallery section", async ({ page }) => {
     await page.goto("/");
@@ -336,20 +338,32 @@ test.describe("category galleries", () => {
     expect(ids).toEqual(CATS.map(c => "BUTTON:" + c));
     await expect(page.locator("#trabajos")).toHaveCount(0);
     await expect(page.locator('a[href="#trabajos"]')).toHaveCount(0);
-    const staticChips = await page.$$eval(".chips .chip", els => els.map(e => e.tagName));
-    expect(staticChips.length).toBe(12);
-    expect(new Set(staticChips)).toEqual(new Set(["DIV"]));
+    // Every service now has its own gallery card: the plain list of services is gone
+    await expect(page.locator(".chips")).toHaveCount(0);
   });
 
   test("the new services open their own photo galleries", async ({ page }) => {
     await page.goto("/");
     await page.locator(".svc-stage").scrollIntoViewIfNeeded();
-    for (const [id, n] of [["sellos", 7], ["serigrafia", 3], ["corte-y-anillado", 2], ["empastados", 1]]) {
+    for (const [id, n] of [["sellos", 7], ["serigrafia", 3], ["corte-y-anillado", 2], ["empastados", 1], ["tarjetas-y-volantes", 2], ["placas-de-reconocimiento", 6], ["sobres-y-folders", 4], ["diplomas", 11], ["copas-personalizadas", 3]]) {
       await openService(page, id);
       await expect(page.locator("#gal")).toBeVisible();
       await expect(page.locator("#gal img")).toHaveCount(n);
       await page.keyboard.press("Escape");
       await expect(page.locator("#gal")).toBeHidden();
+    }
+  });
+
+  test("each service card counts the photos and videos its gallery really has", async ({ page }) => {
+    await page.goto("/");
+    const data = await (await page.request.get("/assets/galeria/galeria.json")).json();
+    for (const c of data) {
+      const p = c.items.filter(i => i.type === "image").length, v = c.items.filter(i => i.type === "video").length;
+      const parts = [];
+      if (p) parts.push(p + (p > 1 ? " fotos" : " foto"));
+      if (v) parts.push(v + (v > 1 ? " vídeos" : " vídeo"));
+      if (!parts.length) continue; // PDF catalogs (pages) describe themselves differently
+      await expect(page.locator(`.svc-card[data-gal="${c.id}"] small`), c.id).toHaveText(parts.join(" · "));
     }
   });
 
@@ -410,8 +424,9 @@ test.describe("category galleries", () => {
     page.on("request", r => { if (r.url().includes("/assets/galeria/")) requested.push(new URL(r.url()).pathname.slice(1)); });
     await page.goto("/", { waitUntil: "networkidle" });
     const covers = await page.$$eval(".svc-card img", imgs => imgs.map(i => i.getAttribute("src")));
-    expect(covers).toHaveLength(15);
-    expect(covers.every(c => /-mini\.webp$/.test(c))).toBe(true);
+    expect(covers).toHaveLength(27);
+    // Covers are light thumbnails, or catalog photos already shown elsewhere on the page
+    expect(covers.every(c => /-mini\.webp$/.test(c) || /^assets\/img\/cuadro-/.test(c))).toBe(true);
     expect(requested.filter(u => !covers.includes(u))).toEqual([]);
   });
 
@@ -640,7 +655,9 @@ test.describe("service carousel", () => {
   const activeColor = page => page.$$eval(".svc-color", els => els.findIndex(e => e.classList.contains("on")));
   const pill = (page, name) => page.locator(".svc-tabs").getByRole("button", { name, exact: true });
   const PILLS = ["Almanaques", "Bolsas kraft", "Cajas con tu logo", "Cirios, velas y velones", "Llaveros y souvenirs", "Invitaciones", "Cuadros de promoción", "Diseño gráfico",
-    "Impresiones y copias", "Diagramación", "Sellos", "Serigrafía", "Enmicados", "Empastados", "Corte y anillado"];
+    "Impresiones y copias", "Diagramación", "Sellos", "Serigrafía", "Enmicados", "Empastados", "Corte y anillado", "Tarjetas y volantes",
+    "Placas de reconocimiento", "Copas personalizadas", "Imágenes de santos", "Sobres y folders", "Agendas", "Libros contables",
+    "Cintas de embalaje y film", "Escaneos", "Tipeos", "Creación de páginas web", "Diplomas"];
 
   test("a single button opens every service as icons; picking one jumps to its card without opening the gallery", async ({ page }) => {
     await page.goto("/");
@@ -662,6 +679,22 @@ test.describe("service carousel", () => {
     await expect(page.locator(".svc-dot", { hasText: "Invitaciones" })).toHaveAttribute("aria-current", "true");
     await expect(page.locator(".svc-tabs [aria-current]")).toHaveCount(1);
     await expect(page.locator("#gal")).toBeHidden();
+  });
+
+  test("on desktop every service icon fits inside the open board", async ({ page }) => {
+    await page.goto("/");
+    await page.locator(".svc-stage").scrollIntoViewIfNeeded();
+    await page.locator(".svc-open").click();
+    await page.waitForFunction(() => document.querySelector(".svc-panel").getAnimations({ subtree: true }).length === 0);
+    const panel = await page.locator(".svc-panel").boundingBox();
+    const boxes = await page.locator(".svc-tabs > button").evaluateAll(els => els.map(e => e.getBoundingClientRect().toJSON()));
+    expect(boxes).toHaveLength(PILLS.length + 1);
+    for (const b of boxes) {
+      expect(b.top).toBeGreaterThanOrEqual(panel.y);
+      expect(b.bottom).toBeLessThanOrEqual(panel.y + panel.height);
+    }
+    await page.keyboard.press("Escape");
+    await expect(page.locator(".svc-stage")).toHaveAttribute("style", /^(?!.*min-height)/);
   });
 
   test("the services panel closes with its centre button, Escape or tabbing out, and focus returns to the launcher", async ({ page }) => {
@@ -705,7 +738,7 @@ test.describe("service carousel", () => {
       expect(b.top).toBeGreaterThanOrEqual(panel.y);
       expect(b.bottom).toBeLessThanOrEqual(panel.y + panel.height);
     }
-    expect(new Set(boxes.slice(0, PILLS.length).map(b => Math.round(b.top))).size).toBe(4);
+    expect(new Set(boxes.slice(0, PILLS.length).map(b => Math.round(b.top))).size).toBe(Math.ceil(PILLS.length / 4));
     const close = boxes[PILLS.length];
     expect(close.right).toBeGreaterThan(panel.x + panel.width - 60);
     expect(close.top).toBeLessThan(panel.y + 60);
@@ -741,12 +774,12 @@ test.describe("service carousel", () => {
     expect(await activeColor(page)).toBe(6);
     await page.getByRole("button", { name: "Servicio siguiente" }).click();
     await expect(active(page)).toHaveAttribute("data-gal", "diseno-grafico");
-    await pickService(page, "Corte y anillado");
-    await expect(active(page)).toHaveAttribute("data-gal", "corte-y-anillado");
+    await pickService(page, "Diplomas");
+    await expect(active(page)).toHaveAttribute("data-gal", "diplomas");
     await page.getByRole("button", { name: "Servicio siguiente" }).click();
     await expect(active(page)).toHaveAttribute("data-gal", "almanaques");
     await page.getByRole("button", { name: "Servicio anterior" }).click();
-    await expect(active(page)).toHaveAttribute("data-gal", "corte-y-anillado");
+    await expect(active(page)).toHaveAttribute("data-gal", "diplomas");
   });
 
   test("plays on its own once visible", async ({ page }) => {
@@ -1097,5 +1130,42 @@ test.describe("catalog page-turn sound", () => {
     for (const w of sizes) expect(w).toBeGreaterThanOrEqual(44);
     await expect(page.locator("#catTitle")).toHaveText("Catálogo de calendarios 2027");
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(MOBILE.width);
+  });
+});
+
+test.describe("service photo viewer on phones", () => {
+  test("swiping with a finger moves between photos without closing the viewer", async ({ page }) => {
+    await page.setViewportSize(MOBILE);
+    await page.goto("/");
+    await page.locator(".svc-stage").scrollIntoViewIfNeeded();
+    await openService(page, "sellos");
+    await page.locator("#gal .gal-thumb").first().click();
+    const caption = page.locator("#galCaption");
+    await expect(caption).toContainText("1 de 7");
+    const swipe = async (from, to) => {
+      const view = page.locator("#galView");
+      await view.dispatchEvent("pointerdown", { pointerType: "touch", isPrimary: true, clientX: from, clientY: 400, bubbles: true });
+      await view.dispatchEvent("pointerup", { pointerType: "touch", isPrimary: true, clientX: to, clientY: 410, bubbles: true });
+      await view.dispatchEvent("click", { bubbles: true });
+    };
+    await swipe(300, 80);
+    await expect(caption).toContainText("2 de 7");
+    await expect(page.locator("#galView")).toBeVisible();
+    await swipe(80, 300);
+    await expect(caption).toContainText("1 de 7");
+    await swipe(80, 300);
+    await expect(caption).toContainText("7 de 7");
+    // A small or mostly vertical move is not a swipe
+    await page.locator("#galView").dispatchEvent("pointerdown", { pointerType: "touch", isPrimary: true, clientX: 200, clientY: 200, bubbles: true });
+    await page.locator("#galView").dispatchEvent("pointerup", { pointerType: "touch", isPrimary: true, clientX: 250, clientY: 500, bubbles: true });
+    await expect(caption).toContainText("7 de 7");
+  });
+
+  test("the Servicios label is bigger than the other section labels", async ({ page }) => {
+    await page.goto("/");
+    const sizes = await page.$$eval(".eyebrow", els => els.map(e => [e.textContent.trim(), parseFloat(getComputedStyle(e).fontSize)]));
+    const svc = sizes.find(([t]) => t === "Servicios")[1];
+    const others = sizes.filter(([t]) => t !== "Servicios").map(([, s]) => s);
+    expect(svc).toBeGreaterThan(Math.max(...others));
   });
 });
