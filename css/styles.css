@@ -429,7 +429,9 @@ section{padding:88px 0}
 .promo-body{display:block;padding:16px 18px 18px;flex:1 1 auto}
 .promo-body h3{font-size:1.06rem;margin-bottom:3px}
 .promo-body p{font-size:.87rem;color:var(--gris);line-height:1.45}
-.promo.hide{display:none}
+.promo.hide,.promo.cut{display:none}
+.promos-more{display:flex;justify-content:center;margin-top:36px}
+.promos-more[hidden]{display:none}
 
 /* Destacados */
 .destacados{background:#fff}

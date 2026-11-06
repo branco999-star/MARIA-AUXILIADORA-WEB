@@ -121,6 +121,29 @@ test("promotion filters show only the chosen category", async ({ page }) => {
   await expect(page.locator("#galeria .promo:not(.hide)")).toHaveCount(21);
 });
 
+test("promotions start collapsed to 8 and the button reveals all 21", async ({ page }) => {
+  await page.goto("/");
+  const visible = page.locator("#galeria .promo:visible");
+  const more = page.locator("#promosMore");
+  await expect(visible).toHaveCount(8);
+  await expect(more).toHaveText("Ver las 21 promociones");
+  await expect(more).toHaveAttribute("aria-expanded", "false");
+  // A category filter shows every card of that category, without the button
+  await page.locator('.filtro[data-f="vidrio"]').click();
+  await expect(visible).toHaveCount(5);
+  await expect(more).toBeHidden();
+  await page.locator('.filtro[data-f="todos"]').click();
+  await expect(visible).toHaveCount(8);
+  await more.click();
+  await expect(visible).toHaveCount(21);
+  await expect(more).toBeHidden();
+  await expect(page.locator("#galeria .promo").nth(8)).toBeFocused();
+  // Once expanded, "Todos" keeps showing all of them
+  await page.locator('.filtro[data-f="bazar"]').click();
+  await page.locator('.filtro[data-f="todos"]').click();
+  await expect(visible).toHaveCount(21);
+});
+
 test("lightbox opens from a promotion, links to WhatsApp and closes with Escape", async ({ page }) => {
   await page.goto("/");
   const first = page.locator("#galeria .promo").first();

@@ -20,6 +20,7 @@ Web de una sola página para la Imprenta, Librería y Bazar "María Auxiliadora"
 - [x] Sección "Tres negocios en una sola tienda" (Imprenta, Librería, Bazar)
 - [x] Sección "Todo lo que hacemos" con los servicios
 - [x] Galería de 21 promociones con filtros por categoría
+- [x] En «Todos» solo se ven las 8 primeras promociones y un botón «Ver las 21 promociones» muestra el resto (los filtros por categoría muestran todas las suyas)
 - [x] Al pulsar una promoción se abre en grande con botón "Pedir esto por WhatsApp"
 - [x] Sección "Productos estrella"
 - [x] Galería de 16 cuadros de promoción en tres líneas (Elegancia/Brillante, Súper Biomadera 3D, Biomadera)

@@ -172,14 +172,36 @@
 
   /* Filtros galería */
   var promos = Array.prototype.slice.call(document.querySelectorAll('.promo'));
+  // Under "Todos" only the first PROMO_LIMIT cards show until the visitor asks for the rest
+  var PROMO_LIMIT = 8,
+      promosExpanded = false,
+      promoFilter = 'todos',
+      promosMore = document.getElementById('promosMore'),
+      promosMoreWrap = document.getElementById('promosMoreWrap');
+  function applyPromos(){
+    var collapsed = promoFilter === 'todos' && !promosExpanded && promos.length > PROMO_LIMIT;
+    promos.forEach(function(p, i){
+      p.classList.toggle('hide', promoFilter !== 'todos' && p.dataset.cat !== promoFilter);
+      p.classList.toggle('cut', collapsed && i >= PROMO_LIMIT);
+    });
+    if (promosMoreWrap) promosMoreWrap.hidden = !collapsed;
+  }
+  if (promosMore){
+    promosMore.textContent = 'Ver las ' + promos.length + ' promociones';
+    promosMore.addEventListener('click', function(){
+      promosExpanded = true;
+      promosMore.setAttribute('aria-expanded', 'true');
+      applyPromos();
+      if (promos[PROMO_LIMIT]) promos[PROMO_LIMIT].focus();
+    });
+  }
+  applyPromos();
   document.querySelectorAll('.filtro').forEach(function(b){
     b.addEventListener('click', function(){
       document.querySelectorAll('.filtro').forEach(function(x){ x.classList.remove('active'); });
       b.classList.add('active');
-      var f = b.dataset.f;
-      promos.forEach(function(p){
-        p.classList.toggle('hide', f !== 'todos' && p.dataset.cat !== f);
-      });
+      promoFilter = b.dataset.f;
+      applyPromos();
     });
   });
 
